@@ -350,6 +350,11 @@
                 <div class="mb-6">
                     <p class="text-gray-500 text-xs uppercase font-bold mb-1">Precio Final (Incluye Gestión):</p>
                     <div class="flex items-end gap-3">
+                        <!-- PEGAR ESTO ENCIMA DEL PRECIO EN EL MODAL -->
+<div id="dynamicLogisticsContainer" class="mb-4 hidden animate-fade-in">
+    <!-- Aquí Javascript inyectará la info del proveedor -->
+</div>
+<!-- FIN DEL CÓDIGO -->
                         <span id="modalPrice" class="text-4xl md:text-5xl font-black text-white tracking-tight">$0,00</span>
                         <span class="text-lg text-gray-400 mb-2 font-bold">USD</span>
                     </div>
@@ -368,6 +373,16 @@
                 </div>
 
                 <div class="mt-auto">
+                    <!-- SELECTOR DE CANTIDAD -->
+<div class="flex items-center justify-between mb-4 bg-gray-800/50 p-3 rounded-xl border border-gray-700">
+    <span class="text-gray-400 text-xs font-bold uppercase ml-1">Cantidad:</span>
+    <div class="flex items-center bg-gray-900 rounded-lg border border-gray-600">
+        <button onclick="changeQty(-1)" class="w-12 h-10 text-gray-400 hover:text-white hover:bg-gray-800 rounded-l-lg transition text-lg font-bold">-</button>
+        <span id="modalQtyDisplay" class="w-12 text-center text-white font-bold text-lg">1</span>
+        <button onclick="changeQty(1)" class="w-12 h-10 text-orange-500 hover:text-white hover:bg-orange-600 rounded-r-lg transition text-lg font-bold">+</button>
+    </div>
+</div>
+<!-- FIN SELECTOR -->
                     <button id="btnAddToCart" onclick="addToCart()" class="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center gap-3 transition transform active:scale-95 text-lg uppercase tracking-wide">
                         <i class="fas fa-cart-plus"></i> Agregar al Pedido
                     </button>
@@ -619,19 +634,29 @@
                 let gallery = [row.Thumbnail, row.Image1, row.Image2, row.Image3].map(img => cleanImageUrl(img)).filter(u => u!=null);
                 const weight = extractWeight(row.Description || '');
 
-                const variant = {
-                    id: index,
-                    price: finalPrice,
-                    color: row.Color || '',
-                    format: row.Formato || '',
-                    stock: row.Stock || '0',
-                    isReservation: isReservation, 
-                    thumb: mainImg,
-                    desc: row.Description,
-                    weight: weight,
-                    supplier: row.Supplier || row.Proveedor || 'General',
-                    paymentOptions: (row.Currency || row.Pagos || "USD, CUP").split(',').map(s => s.trim()).filter(s => s !== "")
-                };
+                // Dentro de la función parseData(data)
+// SUSTITUYE EL BLOQUE "const variant = {" POR ESTE:
+
+const variant = {
+    id: index,
+    price: finalPrice,
+    color: row.Color || '',
+    format: row.Formato || '',
+    stock: row.Stock || '0',
+    isReservation: isReservation, 
+    thumb: mainImg,
+    desc: row.Description,
+    weight: weight,
+    supplier: row.Supplier || row.Proveedor || 'General',
+    
+    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+    // Buscamos todas las formas posibles de escribir las columnas
+    shippingRaw: row['Shipping Cost'] || row['ShippingCost'] || row['Costo Envio'] || row['Envio'] || '', 
+    warrantyRaw: row['Warranty'] || row['Garantia'] || row['Garantía'] || '', 
+    // ---------------------------------
+
+    paymentOptions: (row.Currency || row.Pagos || "USD, CUP").split(',').map(s => s.trim()).filter(s => s !== "")
+};
 
                 if(groupsMap.has(name)) {
                     groupsMap.get(name).variants.push(variant);
@@ -865,26 +890,96 @@
             document.getElementById('productModal').classList.remove('hidden');
         }
 
-        function updateModalVariant() {
-            const idx = document.getElementById('variantSelect').value || 0;
-            selectedVariant = currentGroup.variants[idx];
-            
-            document.getElementById('modalMainImg').src = selectedVariant.thumb;
-            document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
-            document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Descripción estándar del proveedor.';
-            document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
-            
-            // Calc efficiency
-            const pPerLb = selectedVariant.weight > 0 ? (selectedVariant.price / selectedVariant.weight) : 0;
-            document.getElementById('pricePerLb').innerText = pPerLb > 0 ? `$${formatPrice(pPerLb)}` : '---';
+       function updateModalVariant() {
+    const idx = document.getElementById('variantSelect').value || 0;
+    selectedVariant = currentGroup.variants[idx];
+    
+    // 1. Actualizar Datos Básicos
+    document.getElementById('modalMainImg').src = selectedVariant.thumb;
+    document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
+    document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
+    const pPerLb = selectedVariant.weight > 0 ? (selectedVariant.price / selectedVariant.weight) : 0;
+    document.getElementById('pricePerLb').innerText = pPerLb > 0 ? `$${formatPrice(pPerLb)}` : '---';
+    document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Descripción estándar del proveedor.';
 
-            const availDiv = document.getElementById('modalAvailability');
-            if(selectedVariant.isReservation) {
-                availDiv.innerHTML = '<span class="bg-yellow-600 text-black text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-clock"></i> Reserva Previa</span>';
-            } else {
-                availDiv.innerHTML = '<span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-check"></i> Disponible Ahora</span>';
-            }
-        }
+    // 2. DETECTAR PROVEEDOR (Para el color y el icono)
+    const supplierCode = (selectedVariant.supplier || "").toUpperCase();
+    
+    // Configuración Base Visual (Icono, Color, Nombre)
+    let visualInfo = { 
+        name: "ALMACÉN GENERAL", 
+        color: "gray", 
+        icon: "fa-info-circle", 
+        location: "La Habana" 
+    };
+
+    // Reglas por defecto (Solo se usan si el Excel está vacío)
+    let defaultShipping = "A coordinar";
+    let defaultWarranty = "Consultar";
+
+    if (supplierCode.includes("VP")) {
+        visualInfo = { name: "ALMACÉN VP (General)", color: "orange", icon: "fa-box", location: "Centro Habana" };
+        defaultShipping = "$1 - $5 USD (Mensajería Ligera)";
+        defaultWarranty = "30 Días (Cambio Físico)";
+    } 
+    else if (supplierCode.includes("JP")) {
+        visualInfo = { name: "ALMACÉN JP (Mobiliario)", color: "blue", icon: "fa-warehouse", location: "Fontanar" };
+        defaultShipping = "8,000 CUP (Camión Carga)";
+        defaultWarranty = "1 Año (Estructural)";
+    } 
+    else if (supplierCode.includes("AA")) {
+        visualInfo = { name: "ALMACÉN AA (Tecnología)", color: "purple", icon: "fa-microchip", location: "Vedado" };
+        defaultShipping = "Gratis (Habana) / $5 USD (Periferia)";
+        defaultWarranty = "3 Meses Garantía Técnica";
+    }
+
+    // 3. LA LÓGICA DE ORO: EL EXCEL MANDA
+    // Si selectedVariant.warrantyRaw tiene texto, ÚSALO. Si no, usa el default.
+    const finalWarranty = selectedVariant.warrantyRaw && selectedVariant.warrantyRaw.trim() !== "" 
+                          ? selectedVariant.warrantyRaw 
+                          : defaultWarranty;
+
+    const finalShipping = selectedVariant.shippingRaw && selectedVariant.shippingRaw.trim() !== "" 
+                          ? selectedVariant.shippingRaw 
+                          : defaultShipping;
+
+    // 4. GENERAR EL HTML
+    const logHTML = `
+        <div class="p-3 bg-${visualInfo.color}-900/20 border border-${visualInfo.color}-500/50 rounded-lg text-xs">
+            <div class="flex justify-between items-center mb-2 border-b border-${visualInfo.color}-500/30 pb-1">
+                <span class="font-bold text-${visualInfo.color}-400 uppercase">
+                    <i class="fas ${visualInfo.icon} mr-1"></i> ${visualInfo.name}
+                </span>
+                <span class="text-[10px] text-gray-400 bg-black/30 px-2 py-0.5 rounded">${visualInfo.location}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Garantía</p>
+                    <p class="text-white font-bold leading-tight">${finalWarranty}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Costo Envío</p>
+                    <p class="text-white font-bold leading-tight">${finalShipping}</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 5. INYECTAR EN EL HTML
+    const container = document.getElementById('dynamicLogisticsContainer');
+    if(container) {
+        container.innerHTML = logHTML;
+        container.classList.remove('hidden');
+    }
+
+    // 6. Actualizar etiqueta de disponibilidad
+    const availDiv = document.getElementById('modalAvailability');
+    if(selectedVariant.isReservation) {
+        availDiv.innerHTML = '<span class="bg-yellow-600 text-black text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-clock"></i> Reserva</span>';
+    } else {
+        availDiv.innerHTML = '<span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-check"></i> Disponible</span>';
+    }
+}
 
         function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
 
@@ -1404,104 +1499,89 @@ function closeProofModal() {
     </div>
 </section>
 
-<!-- SECCIÓN LOGÍSTICA MULTI-ALMACÉN (Preparada para 4 Proveedores) -->
+<!-- SECCIÓN LOGÍSTICA MULTI-ALMACÉN (CORREGIDA) -->
 <section class="py-12 bg-[#020617] border-t border-gray-800">
     <div class="max-w-6xl mx-auto px-4">
         <div class="text-center mb-10">
             <h3 class="text-white font-bold text-2xl md:text-3xl mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
             <p class="text-gray-400 text-sm max-w-2xl mx-auto">
-                Para ofrecerte el mejor precio, despachamos desde almacenes especializados. 
-                <span class="text-white font-bold">Tu costo de envío depende del tipo de producto.</span>
+                Cada proveedor tiene sus propias reglas de garantía y envío.
+                <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
             </p>
         </div>
         
-        <!-- GRID DE 4 COLUMNAS (Adaptable a móvil) -->
-        <div class="grid md:grid-cols-2 gap-6">
+        <!-- GRID DE 3 COLUMNAS (VP, JP, AA) -->
+        <div class="grid md:grid-cols-3 gap-4">
             
-            <!-- 1. PROVEEDOR VP (General - Almacén Central) -->
-            <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-700 hover:border-orange-500 transition group relative overflow-hidden">
-                <div class="absolute top-0 right-0 bg-orange-600 text-white text-[9px] font-bold px-3 py-1 rounded-bl uppercase">Almacén Central (VP)</div>
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="w-10 h-10 bg-orange-900/30 rounded-lg flex items-center justify-center text-orange-500 text-lg shrink-0"><i class="fas fa-box-open"></i></div>
-                    <div>
-                        <h4 class="text-white font-bold text-sm uppercase">Productos Generales</h4>
-                        <p class="text-[10px] text-gray-400">Hogar, Ferretería, Piezas pequeñas</p>
+            <!-- 1. PROVEEDOR VP (General) -->
+            <div class="bg-gray-900/60 p-4 rounded-xl border border-orange-500/30 hover:border-orange-500 transition group relative">
+                <div class="absolute top-0 right-0 bg-orange-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN VP</div>
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-box-open text-orange-500 text-2xl"></i>
+                    <h4 class="text-white font-bold text-sm">Productos Varios</h4>
+                </div>
+                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Garantía:</span> 
+                        <span class="text-green-400 font-bold">7 Días - 6 Meses</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Envío Habana:</span> 
+                        <span class="text-white font-bold">$1 - $5 USD</span>
+                    </div>
+                    <div class="flex justify-between pt-1">
+                        <span class="text-gray-400">Recogida:</span> 
+                        <span class="text-white">Centro Habana</span>
                     </div>
                 </div>
-                <div class="bg-black/20 p-3 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between"><span class="text-gray-400">Costo Envío:</span> <span class="text-white font-bold">$1 - $10 USD (Según Peso)</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Entrega:</span> <span class="text-white">Mensajería Moto / Carro</span></div>
-                    <div class="flex justify-between border-t border-gray-700 pt-2"><span class="text-gray-400">Recogida:</span> <span class="text-orange-400 font-bold">Centro Habana</span></div>
-                </div>
             </div>
 
-            <!-- 2. PROVEEDOR JP (Góndolas/Estantes) -->
-            <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-700 hover:border-blue-500 transition group relative overflow-hidden">
-                <div class="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-bold px-3 py-1 rounded-bl uppercase">Mobiliario Comercial (JP)</div>
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="w-10 h-10 bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500 text-lg shrink-0"><i class="fas fa-warehouse"></i></div>
-                    <div>
-                        <h4 class="text-white font-bold text-sm uppercase">Góndolas & Estantes</h4>
-                        <p class="text-[10px] text-gray-400">Equipamiento pesado para tiendas</p>
+            <!-- 2. PROVEEDOR JP (Mobiliario) -->
+            <div class="bg-gray-900/60 p-4 rounded-xl border border-blue-500/30 hover:border-blue-500 transition group relative">
+                <div class="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN JP</div>
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-warehouse text-blue-500 text-2xl"></i>
+                    <h4 class="text-white font-bold text-sm">Mobiliario/Góndolas</h4>
+                </div>
+                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Garantía:</span> 
+                        <span class="text-green-400 font-bold text-[10px]">Reposición (Rotura/Piezas)</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Flete Camión:</span> 
+                        <span class="text-white font-bold">~8,000 CUP</span>
+                    </div>
+                    <div class="flex justify-between pt-1">
+                        <span class="text-gray-400">Recogida:</span> 
+                        <span class="text-white">Fontanar</span>
                     </div>
                 </div>
-                <div class="bg-black/20 p-3 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between"><span class="text-gray-400">Flete Habana:</span> <span class="text-white font-bold">8,000 - 10,000 CUP</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Pago:</span> <span class="text-white">Euros / USD / CUP</span></div>
-                    <div class="flex justify-between border-t border-gray-700 pt-2"><span class="text-gray-400">Recogida:</span> <span class="text-blue-400 font-bold">Fontanar (Boyeros)</span></div>
-                </div>
             </div>
 
-            <!-- 3. PROVEEDOR FUTURO 1 (Plantilla - Edita aquí cuando lo tengas) -->
-            <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-700 hover:border-purple-500 transition group relative overflow-hidden opacity-80 hover:opacity-100">
-                <div class="absolute top-0 right-0 bg-purple-900 text-purple-200 text-[9px] font-bold px-3 py-1 rounded-bl uppercase border-l border-b border-purple-500/30">Nuevo Proveedor</div>
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="w-10 h-10 bg-purple-900/30 rounded-lg flex items-center justify-center text-purple-400 text-lg shrink-0"><i class="fas fa-plug"></i></div>
-                    <div>
-                        <h4 class="text-white font-bold text-sm uppercase">Categoría Especial 1</h4>
-                        <p class="text-[10px] text-gray-400">Ej: Electrónica / Importación</p>
+            <!-- 3. PROVEEDOR AA (Tecnología) -->
+            <div class="bg-gray-900/60 p-4 rounded-xl border border-purple-500/30 hover:border-purple-500 transition group relative">
+                <div class="absolute top-0 right-0 bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN AA</div>
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-plug text-purple-500 text-2xl"></i>
+                    <h4 class="text-white font-bold text-sm">Tecnología/Especial</h4>
+                </div>
+                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Garantía:</span> 
+                        <span class="text-green-400 font-bold">1 - 3 Meses</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-700 pb-1">
+                        <span class="text-gray-400">Mensajería:</span> 
+                        <span class="text-white font-bold">Tarifa Variable</span>
+                    </div>
+                    <div class="flex justify-between pt-1">
+                        <span class="text-gray-400">Recogida:</span> 
+                        <span class="text-white italic">A Consultar</span>
                     </div>
                 </div>
-                <div class="bg-black/20 p-3 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between"><span class="text-gray-400">Método Pago:</span> <span class="text-white font-bold">Consultar</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Logística:</span> <span class="text-white">Envío Independiente</span></div>
-                    <div class="flex justify-between border-t border-gray-700 pt-2"><span class="text-gray-400">Ubicación:</span> <span class="text-purple-400 font-bold">Verificar al pedir</span></div>
-                </div>
             </div>
 
-            <!-- 4. PROVEEDOR FUTURO 2 (Plantilla - Edita aquí cuando lo tengas) -->
-            <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-700 hover:border-green-500 transition group relative overflow-hidden opacity-80 hover:opacity-100">
-                <div class="absolute top-0 right-0 bg-green-900 text-green-200 text-[9px] font-bold px-3 py-1 rounded-bl uppercase border-l border-b border-green-500/30">Nuevo Proveedor</div>
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="w-10 h-10 bg-green-900/30 rounded-lg flex items-center justify-center text-green-400 text-lg shrink-0"><i class="fas fa-truck-plane"></i></div>
-                    <div>
-                        <h4 class="text-white font-bold text-sm uppercase">Categoría Especial 2</h4>
-                        <p class="text-[10px] text-gray-400">Ej: Alimentos / Pedidos Custom</p>
-                    </div>
-                </div>
-                <div class="bg-black/20 p-3 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between"><span class="text-gray-400">Método Pago:</span> <span class="text-white font-bold">Consultar</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Logística:</span> <span class="text-white">Envío Independiente</span></div>
-                    <div class="flex justify-between border-t border-gray-700 pt-2"><span class="text-gray-400">Ubicación:</span> <span class="text-green-400 font-bold">Verificar al pedir</span></div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ALERTA DE PEDIDO MIXTO -->
-        <div class="mt-8 bg-gradient-to-r from-red-900/20 to-gray-900 border border-red-500/30 p-4 rounded-xl flex flex-col md:flex-row items-start gap-4 shadow-lg">
-            <div class="w-10 h-10 rounded-full bg-red-900/50 flex items-center justify-center text-red-400 shrink-0 border border-red-500/50 text-xl font-bold">!</div>
-            <div>
-                <h5 class="text-white font-bold text-sm uppercase tracking-wide text-red-400">Aviso Importante sobre Carritos Mixtos</h5>
-                <p class="text-gray-300 text-xs mt-1 leading-relaxed">
-                    Si agregas productos de <strong>diferentes proveedores</strong> (ej: Una Góndola JP + Un Taladro VP) en el mismo pedido:
-                </p>
-                <ul class="mt-2 text-[11px] text-gray-400 list-disc list-inside space-y-1">
-                    <li>Se procesarán como <strong>envíos separados</strong>.</li>
-                    <li>Tendrás que coordinar <strong>recogidas en lugares distintos</strong> si no eliges mensajería.</li>
-                    <li>Nuestro sistema te avisará por WhatsApp con los detalles de cada almacén.</li>
-                </ul>
-            </div>
         </div>
     </div>
 </section>
