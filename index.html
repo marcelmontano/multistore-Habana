@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTISTORE | Tu Almacén en La Habana</title>
     
-    <!-- Librerías de Animación -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <!-- Librerías -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -60,26 +59,13 @@
         .whatsapp-pulse { position: absolute; width: 100%; height: 100%; background: #25D366; border-radius: 50%; z-index: -1; opacity: 0.7; animation: whatsapp-wave 2s infinite; }
         @keyframes whatsapp-wave { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.5); opacity: 0; } }
         
-        /* Botón del carrito corregido */
+        /* Botón del carrito */
         .cart-float { 
-            position: fixed; 
-            bottom: 100px;  /* 30px del WhatsApp + espacio para que quede encima */
-            right: 20px;    /* Alineado a la derecha igual que el WhatsApp */
-            left: auto;     /* Importante: anula la posición izquierda anterior */
-            z-index: 9999; 
-            display: flex;  /* Asegura que el icono se centre */
-            
-            /* Esto asegura que el navegador lo pinte siempre */
-            visibility: visible;
-            opacity: 1;
+            position: fixed; bottom: 100px; right: 20px; left: auto; z-index: 9999; display: flex; visibility: visible; opacity: 1;
         }
         
         .cat-btn.active { 
-            background-color: #f97316; 
-            color: white; 
-            border-color: #f97316; 
-            transform: scale(1.05); 
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+            background-color: #f97316; color: white; border-color: #f97316; transform: scale(1.05); box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
         }
         
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #f97316; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
@@ -92,23 +78,11 @@
             background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 10px, #991b1b 10px, #991b1b 20px);
         }
 
-        <style>
-        body { background-color: #020617; color: #e2e8f0; }
-        /* ... (aquí está todo tu código CSS anterior) ... */
-        
-        /* Scarcity Banner */
-        .scarcity-stripe {
-            background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 10px, #991b1b 10px, #991b1b 20px);
-        }
-
-        /* --- PEGA EL CÓDIGO NUEVO AQUÍ --- */
-        /* Custom Scrollbar para el carrusel */
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ea580c; }
-        /* --------------------------------- */
-
     </style>
 </head>
     </style>
@@ -787,7 +761,11 @@
                 weight: extractWeight(row.Description || ''),
                 supplier: supplierCode, // CÓDIGO NORMALIZADO
                 rawShipping: row['Shipping Cost'] || '', // Por si viene explícito en CSV
-                paymentOptions: (row.Currency || "").split(',')
+                paymentOptions: (row.Currency || "").split(','),
+                // --- AGREGA ESTA LÍNEA AQUÍ ---
+                // Intenta leer 'Garantía', 'Garantia' o 'Warranty' del Excel
+                warranty: row['Garantía'] || row['Garantia'] || row['Warranty'] || '' 
+                // ------------------------------
             };
 
             if(groupsMap.has(name)) {
@@ -810,22 +788,36 @@
         const container = document.getElementById('category-filters-hero');
         container.innerHTML = '';
         
-        // Botón "Ver Todo"
-        container.innerHTML += `
-            <button onclick="showFullCatalog('all')" 
-            class="cat-btn active px-6 py-3 rounded-full border border-gray-600 bg-gray-900 text-white hover:bg-orange-600 hover:border-orange-500 font-bold text-xs uppercase transition shadow-lg flex items-center gap-2">
-            <i class="fas fa-border-all"></i> Todo
-            </button>`;
-
-        // Botones de Colecciones Inteligentes
+        // 1. FILA DE COLECCIONES INTELIGENTES (MARKETING)
+        let smartHTML = `<div class="w-full flex flex-wrap justify-center gap-2 mb-3 border-b border-gray-700 pb-3">`;
+        smartHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Necesidad</span>`;
+        
         SMART_COLLECTIONS.forEach(col => {
-            container.innerHTML += `
+            smartHTML += `
                 <button onclick="filterByCollection('${col.id}')" 
-                class="cat-btn px-6 py-3 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:text-white hover:border-orange-500 hover:bg-gray-700 transition font-bold text-xs uppercase shadow-md whitespace-nowrap">
+                class="smart-btn px-4 py-1 rounded-full border border-orange-500/30 bg-orange-900/10 text-orange-200 hover:bg-orange-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1">
                 ${col.label}
                 </button>`;
         });
+        smartHTML += `</div>`;
+        container.innerHTML += smartHTML;
+
+        // 2. FILA DE CATEGORÍAS DEL EXCEL (ORIGINALES)
+        let catHTML = `<div class="w-full flex flex-wrap justify-center gap-2">`;
+        catHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Catálogo</span>`;
+        
+        // Botón "Todo"
+        catHTML += `<button onclick="showFullCatalog('all')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">Ver Todo</button>`;
+        
+        // Botones dinámicos del Excel
+        categories.forEach(cat => {
+            catHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">${cat}</button>`;
+        });
+        catHTML += `</div>`;
+        container.innerHTML += catHTML;
     }
+
+
 
     function filterByCollection(collectionId) {
         // 1. Efecto visual en botones
@@ -930,34 +922,76 @@
     function updateModalVariant() {
         const idx = document.getElementById('variantSelect').value || 0;
         selectedVariant = currentGroup.variants[idx];
+        
+        // 1. Obtenemos las reglas generales del proveedor
         const sRule = SUPPLIER_RULES[selectedVariant.supplier] || SUPPLIER_RULES["VP"];
 
+        // 2. LÓGICA DE PRIORIDAD DE GARANTÍA
+        // Si el producto tiene algo escrito en la columna garantía, lo usamos.
+        // Si no, usamos la garantía general definida en SUPPLIER_RULES.
+        let displayWarranty = sRule.warranty || 'Consultar al recibir'; // Valor por defecto (Regla General)
+        
+        if (selectedVariant.warranty && selectedVariant.warranty.trim() !== "") {
+            displayWarranty = selectedVariant.warranty; // Valor Específico (Excel)
+        }
+
+        // Renderizado de datos básicos
         document.getElementById('modalMainImg').src = selectedVariant.thumb;
         document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
         document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
         document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Sin descripción.';
 
-        // INYECCIÓN DE DATOS DE PROVEEDOR
+        // Inyección HTML con la Garantía Correcta
         const container = document.getElementById('dynamicLogisticsContainer');
         container.innerHTML = `
-            <div class="p-3 bg-${sRule.color}-900/20 border border-${sRule.color}-500/50 rounded-lg text-xs animate-fade-in">
-                <div class="flex justify-between items-center mb-2 border-b border-${sRule.color}-500/30 pb-1">
-                    <span class="font-bold text-${sRule.color}-400 uppercase">
-                        <i class="fas ${sRule.icon} mr-1"></i> ${sRule.name}
-                    </span>
-                    <span class="text-[9px] text-gray-400 bg-black/30 px-2 rounded">Cód: ${selectedVariant.supplier}</span>
+            <div class="p-4 bg-${sRule.color}-900/10 border border-${sRule.color}-500/50 rounded-xl text-sm animate-fade-in relative overflow-hidden">
+                <!-- Etiqueta del Proveedor -->
+                <div class="absolute top-0 right-0 bg-${sRule.color}-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                    ALMACÉN ${selectedVariant.supplier}
                 </div>
-                <div class="mb-2">
-                    <p class="text-[10px] text-gray-500 uppercase font-bold">Monedas Aceptadas:</p>
-                    <p class="text-white font-medium">${sRule.currencyInfo}</p>
+
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-${sRule.color}-500/20 flex items-center justify-center">
+                        <i class="fas ${sRule.icon} text-${sRule.color}-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-[10px] font-bold uppercase">Gestionado por:</p>
+                        <p class="text-white font-bold leading-none">${sRule.name}</p>
+                    </div>
                 </div>
-                <div>
-                     <p class="text-[10px] text-gray-500 uppercase font-bold">Condición Envío:</p>
-                     <p class="text-white font-medium">${getShippingText(sRule)}</p>
+
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-3">
+                    <!-- GARANTÍA INTELIGENTE -->
+                    <div>
+                        <p class="text-gray-500 text-[10px] font-bold uppercase mb-1"><i class="fas fa-shield-alt text-green-500 mr-1"></i> Garantía:</p>
+                        <p class="text-white font-bold text-sm bg-green-500/10 inline-block px-2 py-0.5 rounded border border-green-500/30">
+                            ${displayWarranty}
+                        </p>
+                    </div>
+
+                    <!-- UBICACIÓN -->
+                    <div>
+                        <p class="text-gray-500 text-[10px] font-bold uppercase mb-1"><i class="fas fa-map-marker-alt text-orange-500 mr-1"></i> Salida:</p>
+                        <p class="text-white font-bold text-xs">${sRule.location || 'Almacén Central'}</p>
+                    </div>
+                </div>
+                
+                 <div class="mt-3 bg-gray-900/50 p-2 rounded border border-gray-700/50">
+                     <p class="text-[10px] text-gray-400 text-center">
+                        🚚 Condición de Envío: <span class="text-gray-200 font-bold">${getShippingText(sRule)}</span>
+                     </p>
                 </div>
             </div>
         `;
         container.classList.remove('hidden');
+        
+        // Calculadora precio por libra
+        if(selectedVariant.weight > 0) {
+            const ppl = selectedVariant.price / selectedVariant.weight;
+            document.getElementById('pricePerLb').innerText = `$${ppl.toFixed(2)}`;
+        } else {
+            document.getElementById('pricePerLb').innerText = '---';
+        }
     }
 
     function getShippingText(rule) {
