@@ -531,6 +531,41 @@
     let currentModalQty = 1;
     let currentAffiliate = localStorage.getItem('multistore_ref') || null;
 
+    // --- COLECCIONES INTELIGENTES (Marketing para Cuba) ---
+    // Aquí defines el Nombre del Botón y las palabras clave que busca en el producto
+    const SMART_COLLECTIONS = [
+        {
+            id: 'energia',
+            label: '⚡ Cero Apagones',
+            keywords: ['planta', 'generador', 'bateria', 'ups', 'panel', 'luz', 'lampara', 'recargable']
+        },
+        {
+            id: 'frio',
+            label: '❄️ Frío y Conservación',
+            keywords: ['nevera', 'freezer', 'refrigerador', 'split', 'aire', 'clima', 'congelador', 'exhibidora']
+        },
+        {
+            id: 'cocina',
+            label: '🍳 Cocina Eficiente',
+            keywords: ['olla', 'reina', 'arrocera', 'cocina', 'gas', 'batidora', 'licuadora', 'horno', 'fogón']
+        },
+        {
+            id: 'transporte',
+            label: '🛵 Transporte y Piezas',
+            keywords: ['moto', 'bicicleta', 'neumatico', 'llanta', 'rin', 'camara', 'unidad', 'bateria moto']
+        },
+        {
+            id: 'negocio',
+            label: '💼 Para Negocios',
+            keywords: ['exhibidora', 'insumo', 'qle', 'sankey', 'gondola', 'estante', 'frio', 'industrial']
+        },
+        {
+            id: 'hogar',
+            label: '🏠 Hogar y Mantenimiento',
+            keywords: ['pintura', 'impermeabilizante', 'tv', 'televisor', 'lavadora', 'mueble', 'bomba', 'agua']
+        }
+    ];
+
 
     // --- CONFIGURACIÓN MAESTRA DE PROVEEDORES ---
     // Aquí definimos las reglas exactas que me diste
@@ -773,8 +808,48 @@
     // --- RENDERIZADO (Grid, Categorías - Igual que antes) ---
     function renderCategories() {
         const container = document.getElementById('category-filters-hero');
-        container.innerHTML = `<button onclick="showFullCatalog('all')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white font-bold text-xs uppercase">Todo</button>`;
-        categories.forEach(cat => container.innerHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white transition font-bold text-xs uppercase">${cat}</button>`);
+        container.innerHTML = '';
+        
+        // Botón "Ver Todo"
+        container.innerHTML += `
+            <button onclick="showFullCatalog('all')" 
+            class="cat-btn active px-6 py-3 rounded-full border border-gray-600 bg-gray-900 text-white hover:bg-orange-600 hover:border-orange-500 font-bold text-xs uppercase transition shadow-lg flex items-center gap-2">
+            <i class="fas fa-border-all"></i> Todo
+            </button>`;
+
+        // Botones de Colecciones Inteligentes
+        SMART_COLLECTIONS.forEach(col => {
+            container.innerHTML += `
+                <button onclick="filterByCollection('${col.id}')" 
+                class="cat-btn px-6 py-3 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:text-white hover:border-orange-500 hover:bg-gray-700 transition font-bold text-xs uppercase shadow-md whitespace-nowrap">
+                ${col.label}
+                </button>`;
+        });
+    }
+
+    function filterByCollection(collectionId) {
+        // 1. Efecto visual en botones
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active', 'bg-orange-600', 'text-white'));
+        event.currentTarget.classList.add('active', 'bg-orange-600', 'text-white'); // Resaltar el seleccionado
+
+        // 2. Encontrar la configuración de la colección
+        const collection = SMART_COLLECTIONS.find(c => c.id === collectionId);
+        if(!collection) return;
+
+        // 3. Filtrar productos buscando las palabras clave en Nombre o Categoría
+        const filtered = groupedProducts.filter(group => {
+            const searchText = (group.name + ' ' + group.category).toLowerCase();
+            // Retorna true si ALGUNA de las palabras clave está en el texto
+            return collection.keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+        });
+
+        // 4. Mostrar resultados y scrollear
+        renderGrid(filtered);
+        
+        // Actualizar título de la sección
+        document.getElementById('catalog-title').innerHTML = `Colección: <span class="text-orange-500">${collection.label}</span>`;
+        document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+        document.getElementById('view-all-container').classList.add('hidden');
     }
 
     function showFeaturedProducts() {
@@ -1265,6 +1340,50 @@
     updateCartCount();
     closeOrderForm();
 }
+// --- FUNCIÓN DE BÚSQUEDA REPARADA ---
+function filterProducts() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    if(!q) { 
+        renderGrid(groupedProducts); 
+        document.getElementById('catalog-title').innerHTML = "Inventario Disponible";
+        return; 
+    }
+
+    const filtered = groupedProducts.filter(group => {
+        const variant = group.variants[0]; 
+        const searchString = `
+            ${group.name} 
+            ${group.category} 
+            ${variant.desc || ''} 
+            ${variant.supplier}
+        `.toLowerCase();
+
+        return searchString.includes(q);
+    });
+
+    renderGrid(filtered);
+
+    const count = filtered.length;
+    if(count > 0) {
+        document.getElementById('catalog-title').innerHTML = `🔍 Resultados para: <span class="text-orange-500">"${q}"</span> (${count})`;
+    } else {
+        document.getElementById('catalog-title').innerHTML = `⚠️ No encontramos nada para: <span class="text-gray-500">"${q}"</span>`;
+        document.getElementById('product-grid').innerHTML = `
+            <div class="col-span-full text-center py-10 opacity-50">
+                <i class="fas fa-search text-4xl mb-2"></i>
+                <p>Prueba buscando "Split", "Planta", "Nevera" o el modelo.</p>
+            </div>
+        `;
+    }
+}
+
+// Enter para bajar al catálogo
+document.getElementById('searchInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+    }
+});
 </script>
 
     <!-- 4. SOCIAL PROOF: WALL OF TRUTH (Integración Real) -->
