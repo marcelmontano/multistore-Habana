@@ -439,21 +439,20 @@
                     <button onclick="closeOrderForm()" class="text-gray-400 text-2xl hover:text-white">&times;</button>
                 </div>
 
-                <!-- ALERTA MIXTA (Texto Anonimizado) -->
-                <div id="mixedCartAlert" class="hidden mb-4 bg-orange-900/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
-                    <div class="text-2xl">🚧</div>
-                    <div>
-                        <h4 class="text-orange-400 font-bold text-xs uppercase">Pedido Multi-Almacén</h4>
-                        <p class="text-gray-400 text-[10px] leading-tight">
-                            Tu carrito contiene productos de <strong>dos almacenes distintos</strong>.
-                        </p>
-                        <ul class="text-gray-400 text-[10px] mt-2 list-disc pl-4 space-y-1">
-                            <li>Se procesarán como <strong>dos envíos independientes</strong>.</li>
-                            <li>Llegarán en <strong>horarios diferentes</strong>.</li>
-                            <li>Si eliges recogida, tendrás que ir a <strong>dos direcciones distintas</strong> (Te enviaremos las ubicaciones por WhatsApp).</li>
-                        </ul>
-                    </div>
-                </div>
+                <!-- AVISO NEUTRO (Estilo Amazon) -->
+<div id="mixedCartAlert" class="hidden mb-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 animate-fade-in">
+    <div class="flex items-start gap-3">
+        <div class="bg-blue-500/20 p-2 rounded-full text-blue-400">
+            <i class="fas fa-shipping-fast"></i>
+        </div>
+        <div>
+            <h4 class="text-blue-100 font-bold text-sm mb-1">Tu pedido se ha dividido en envíos especializados</h4>
+            <p class="text-gray-400 text-xs leading-relaxed">
+                Para garantizar la seguridad de la carga y la rapidez, tus productos salen directamente desde sus almacenes específicos. <span class="text-white font-bold">Recibirás entregas separadas.</span>
+            </p>
+        </div>
+    </div>
+</div>
 
                 <form id="checkoutForm" onsubmit="submitOrder(event)" class="space-y-4">
                     
@@ -1090,7 +1089,7 @@ const variant = {
         }
 
         function calculateCartTotal() {
-    // 1. Leer configuraciones
+    // 1. Detectar Métodos de Entrega Seleccionados
     const elDelVP = document.getElementById('deliveryMethodVP');
     const elDelJP = document.getElementById('deliveryMethodJP');
     const elDelAA = document.getElementById('deliveryMethodAA');
@@ -1099,7 +1098,7 @@ const variant = {
     const isDeliveryJP = elDelJP ? elDelJP.value === 'delivery' : false;
     const isDeliveryAA = elDelAA ? elDelAA.value === 'delivery' : false;
     
-    // 2. Mostrar/Ocultar dirección
+    // 2. Control de visibilidad de dirección (Si al menos uno pide delivery)
     const fields = document.getElementById('deliveryFields');
     const muniSelect = document.getElementById('custMuni');
     
@@ -1113,7 +1112,7 @@ const variant = {
 
     const muni = muniSelect.value;
 
-    // 3. Separar Carrito
+    // 3. Separar los Ítems
     let itemsVP = [], itemsJP = [], itemsAA = [];
     let weightVP = 0;
 
@@ -1127,71 +1126,123 @@ const variant = {
         }
     });
 
+    // 4. Calcular cuántos paquetes son en total (para poner "Envío 1 de 2")
+    let totalPackages = (itemsVP.length > 0 ? 1 : 0) + (itemsJP.length > 0 ? 1 : 0) + (itemsAA.length > 0 ? 1 : 0);
+    let currentPackage = 1;
+
     const receiptContainer = document.getElementById('liveReceipt');
     receiptContainer.innerHTML = ''; 
 
-    // --- GRUPO 1: VP ---
+    // --- PAQUETE 1: VP (General) ---
     if (itemsVP.length > 0) {
         const payMethod = document.getElementById('payMethodVP').value;
         let subtotal = itemsVP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
         let shippingCost = 0;
-        let statusLine = "Recogida: Centro Habana";
+        let statusLine = "📍 Recogida: Centro Habana";
 
         if (isDeliveryVP) {
             if (weightVP <= 50) shippingCost = 1;
             else if (weightVP <= 180) shippingCost = 3;
             else shippingCost = 10;
-            statusLine = `Envío (${weightVP.toFixed(1)}lb): $${formatPrice(shippingCost)}`;
+            statusLine = `🚚 Envío a Domicilio ($${shippingCost})`;
         }
 
         let total = subtotal + shippingCost;
         let finalStr = `$${formatPrice(total)} USD`;
+        
+        // Conversión si paga en CUP
         if (payMethod.includes("CUP")) {
-            const match = payMethod.match(/\+(\d+)/);
+            const match = payMethod.match(/\+(\d+)/); // Busca si hay "+X" en el string
             let rate = globalExchangeRate + (match ? parseFloat(match[1]) : 0);
             finalStr = `${formatPrice(total * rate)} CUP`;
         }
 
-        receiptContainer.innerHTML += generateReceiptBlock("VP", "orange", itemsVP, subtotal, statusLine, finalStr, payMethod);
+        receiptContainer.innerHTML += generateShipmentCard(
+            currentPackage, totalPackages, "ALMACÉN GENERAL (VP)", "orange", "fa-box-open",
+            itemsVP, statusLine, finalStr, payMethod
+        );
+        currentPackage++;
     }
 
-    // --- GRUPO 2: JP ---
+    // --- PAQUETE 2: JP (Mobiliario) ---
     if (itemsJP.length > 0) {
         const payMethod = document.getElementById('payMethodJP').value;
         let subtotal = itemsJP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
         let shippingInfo = isDeliveryJP 
-            ? `<div class="text-xs text-blue-400 mt-1">Flete: ~${muni === "Habana del Este" ? "10,000" : "8,000"} CUP</div>` 
-            : `<div class="text-xs text-gray-400 mt-1">Recogida: Fontanar</div>`;
+            ? `🚚 Flete Camión: ~${muni === "Habana del Este" ? "10,000" : "8,000"} CUP` 
+            : `📍 Recogida: Fontanar`;
 
         let finalStr = `$${formatPrice(subtotal)} USD`;
         if (payMethod.includes("EUR")) finalStr = `€${formatPrice(subtotal)} EUR`;
 
-        receiptContainer.innerHTML += generateReceiptBlock("JP", "blue", itemsJP, subtotal, shippingInfo, finalStr, payMethod);
+        receiptContainer.innerHTML += generateShipmentCard(
+            currentPackage, totalPackages, "ALMACÉN MOBILIARIO (JP)", "blue", "fa-chair",
+            itemsJP, shippingInfo, finalStr, payMethod
+        );
+        currentPackage++;
     }
 
-    // --- GRUPO 3: AA (NUEVO) ---
+    // --- PAQUETE 3: AA (Tecnología) ---
     if (itemsAA.length > 0) {
         const payMethod = document.getElementById('payMethodAA').value;
         let subtotal = itemsAA.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingInfo = "Recogida: Vedado";
+        let shippingInfo = isDeliveryAA 
+            ? `🚚 Envío Especializado (Tarifa Variable)` 
+            : `📍 Recogida: Vedado`;
         
-        // Lógica de Envío AA: Gratis Habana / $5 Periferia
-        // Como es difícil saber exacto qué es periferia sin una lista larga, ponemos el aviso
-        let deliveryCost = 0;
-        if (isDeliveryAA) {
-            // Lógica simple: Si selecciona delivery, asumimos costo base o gratis según lógica
-            // Para ser seguros en el recibo, mostramos el rango o la condición
-            shippingInfo = `Envío: Gratis (Habana) / $5 (Periferia)`;
-            // Si quieres sumar los $5 por defecto para asegurar:
-            // deliveryCost = 5; 
-        }
+        let finalStr = `$${formatPrice(subtotal)} USD`;
+        // AA suele cobrar envío aparte al mensajero, así que dejamos el precio del producto limpio
+        if (isDeliveryAA) finalStr += " (+Envío)";
 
-        let total = subtotal + deliveryCost; // Aquí deliveryCost es 0, el cliente paga al mensajero si aplica
-        let finalStr = `$${formatPrice(total)} USD`;
-        if (deliveryCost > 0) finalStr += ` (+Envío)`;
-
-        receiptContainer.innerHTML += generateReceiptBlock("AA", "purple", itemsAA, subtotal, shippingInfo, finalStr, payMethod);
+        receiptContainer.innerHTML += generateShipmentCard(
+            currentPackage, totalPackages, "ALMACÉN TECNOLOGÍA (AA)", "purple", "fa-microchip",
+            itemsAA, shippingInfo, finalStr, payMethod
+        );
+        currentPackage++;
     }
+}
+
+// Nueva función auxiliar para diseñar las tarjetas bonitas
+function generateShipmentCard(index, total, title, color, icon, items, shippingText, totalStr, payMethod) {
+    return `
+    <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-4 relative shadow-lg">
+        <!-- Cabecera del Paquete -->
+        <div class="bg-gray-900/80 p-3 border-b border-gray-700 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-${color}-500/20 text-${color}-400 w-8 h-8 rounded-full flex items-center justify-center border border-${color}-500/30">
+                    <i class="fas ${icon} text-xs"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">ENVÍO ${index} DE ${total}</p>
+                    <p class="text-white font-bold text-xs">${title}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Items -->
+        <div class="p-4 space-y-3">
+            <ul class="text-xs text-gray-300 space-y-2">
+                ${items.map(i => `
+                    <li class="flex justify-between items-start border-b border-gray-700/50 pb-2 last:border-0">
+                        <span class="text-gray-200"><span class="font-bold text-white">${i.quantity}x</span> ${i.name}</span>
+                        <span class="text-gray-500 text-[10px]">${i.variant.color || ''}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+
+        <!-- Footer: Pago y Entrega -->
+        <div class="bg-${color}-900/10 p-3 border-t border-${color}-500/20 flex flex-col gap-2">
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-gray-400">${shippingText}</span>
+                <span class="text-gray-400 italic">${payMethod}</span>
+            </div>
+            <div class="flex justify-between items-center pt-1 mt-1 border-t border-dashed border-gray-700">
+                <span class="text-gray-300 font-bold text-xs">TOTAL A PAGAR:</span>
+                <span class="text-${color}-400 font-black text-lg">${totalStr}</span>
+            </div>
+        </div>
+    </div>`;
 }
 
 // Función auxiliar para dibujar el recibo (para no repetir código HTML)
@@ -1220,15 +1271,7 @@ function generateReceiptBlock(code, color, items, subtotal, shippingHtml, totalS
     const name = document.getElementById('custName').value;
     const ci = document.getElementById('custCI').value;
     
-    // Estados de entrega
-    const elDelVP = document.getElementById('deliveryMethodVP');
-    const elDelJP = document.getElementById('deliveryMethodJP');
-    const elDelAA = document.getElementById('deliveryMethodAA');
-    
-    const isDeliveryVP = elDelVP ? elDelVP.value === 'delivery' : false;
-    const isDeliveryJP = elDelJP ? elDelJP.value === 'delivery' : false;
-    const isDeliveryAA = elDelAA ? elDelAA.value === 'delivery' : false;
-
+    // Recopilar items por grupo
     let itemsVP = [], itemsJP = [], itemsAA = [];
     cart.forEach(item => {
         const supplier = (item.variant.supplier || "").toUpperCase();
@@ -1237,41 +1280,69 @@ function generateReceiptBlock(code, color, items, subtotal, shippingHtml, totalS
         else itemsVP.push(item);
     });
 
-    let msg = `🚨 *NUEVO PEDIDO* 🚨\n👤 *Cliente:* ${name}\n🆔 *CI:* ${ci}\n`;
+    // Encabezado General
+    let msg = `👋 *HOLA MULTISTORE* \n`;
+    msg += `Soy *${name}* (CI: ${ci}).\nQuiero confirmar el siguiente pedido:\n\n`;
+    msg += `--------------------------------\n`;
 
-    // --- GRUPO VP ---
+    // --- BLOQUE 1: VP ---
     if (itemsVP.length > 0) {
-        msg += `\n📦 *GRUPO 1 (General)* | Pago: ${document.getElementById('payMethodVP').value}`;
-        itemsVP.forEach(i => msg += `\n   - ${i.quantity}x ${i.name}`);
-        msg += isDeliveryVP ? `\n   🚚 Entrega: MENSAJERÍA` : `\n   📍 Entrega: RECOGIDA (C. Habana)`;
-        msg += `\n`;
+        const pay = document.getElementById('payMethodVP').value;
+        const del = document.getElementById('deliveryMethodVP').value === 'delivery' ? 'DOMICILIO' : 'RECOGIDA';
+        msg += `📦 *PAQUETE #1 (General)*\n`;
+        itemsVP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name} (${i.variant.color || 'Std'})\n`);
+        msg += `   💳 Pago: ${pay}\n`;
+        msg += `   🚚 Entrega: ${del}\n`;
+        msg += `--------------------------------\n`;
     }
 
-    // --- GRUPO JP ---
+    // --- BLOQUE 2: JP ---
     if (itemsJP.length > 0) {
-        msg += `\n📦 *GRUPO 2 (Mobiliario)* | Pago: ${document.getElementById('payMethodJP').value}`;
-        itemsJP.forEach(i => msg += `\n   - ${i.quantity}x ${i.name}`);
-        msg += isDeliveryJP ? `\n   🚚 Entrega: CAMIÓN (A cotizar)` : `\n   📍 Entrega: RECOGIDA (Fontanar)`;
-        msg += `\n`;
+        const pay = document.getElementById('payMethodJP').value;
+        const del = document.getElementById('deliveryMethodJP').value === 'delivery' ? 'CAMIÓN' : 'RECOGIDA';
+        msg += `🪑 *PAQUETE #2 (Mobiliario)*\n`;
+        itemsJP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
+        msg += `   💳 Pago: ${pay}\n`;
+        msg += `   🚚 Entrega: ${del}\n`;
+        msg += `--------------------------------\n`;
     }
 
-    // --- GRUPO AA ---
+    // --- BLOQUE 3: AA ---
     if (itemsAA.length > 0) {
-        msg += `\n📦 *GRUPO 3 (Tecnología)* | Pago: ${document.getElementById('payMethodAA').value}`;
-        itemsAA.forEach(i => msg += `\n   - ${i.quantity}x ${i.name}`);
-        msg += isDeliveryAA ? `\n   🚚 Entrega: MENSAJERÍA (Gratis/Periferia)` : `\n   📍 Entrega: RECOGIDA (Vedado)`;
-        msg += `\n`;
+        const pay = document.getElementById('payMethodAA').value;
+        const del = document.getElementById('deliveryMethodAA').value === 'delivery' ? 'MENSAJERÍA' : 'RECOGIDA';
+        msg += `💻 *PAQUETE #3 (Tecnología)*\n`;
+        itemsAA.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
+        msg += `   💳 Pago: ${pay}\n`;
+        msg += `   🚚 Entrega: ${del}\n`;
+        msg += `--------------------------------\n`;
     }
 
-    if (isDeliveryVP || isDeliveryJP || isDeliveryAA) {
+    // Datos de Entrega (solo si aplica)
+    const elDelVP = document.getElementById('deliveryMethodVP');
+    const elDelJP = document.getElementById('deliveryMethodJP');
+    const elDelAA = document.getElementById('deliveryMethodAA');
+    const isDelivery = (elDelVP && elDelVP.value === 'delivery') || 
+                       (elDelJP && elDelJP.value === 'delivery') || 
+                       (elDelAA && elDelAA.value === 'delivery');
+
+    if (isDelivery) {
         const address = document.getElementById('custAddress').value;
         const muni = document.getElementById('custMuni').options[document.getElementById('custMuni').selectedIndex].text;
-        msg += `\n🏠 *DIRECCIÓN:* ${muni}\n${address}`;
+        msg += `📍 *DATOS DE ENTREGA:*\n`;
+        msg += `   Municipio: ${muni}\n`;
+        msg += `   Dirección: ${address}\n`;
     }
 
+    msg += `\n✅ *Entiendo que los paquetes pueden llegar por separado.*`;
+
+    // Enviar
     window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    // Limpieza
     closeOrderForm();
-    cart = []; updateCartCount();
+    cart = []; 
+    updateCartCount();
 }
 
         // FUNCIONALIDAD DE BÚSQUEDA INSTANTÁNEA
