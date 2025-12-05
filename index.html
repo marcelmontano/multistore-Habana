@@ -1089,7 +1089,7 @@ const variant = {
         }
 
         function calculateCartTotal() {
-    // 1. Detectar Métodos de Entrega Seleccionados
+    // 1. Detectar Métodos
     const elDelVP = document.getElementById('deliveryMethodVP');
     const elDelJP = document.getElementById('deliveryMethodJP');
     const elDelAA = document.getElementById('deliveryMethodAA');
@@ -1098,10 +1098,11 @@ const variant = {
     const isDeliveryJP = elDelJP ? elDelJP.value === 'delivery' : false;
     const isDeliveryAA = elDelAA ? elDelAA.value === 'delivery' : false;
     
-    // 2. Control de visibilidad de dirección (Si al menos uno pide delivery)
+    // 2. Control de Dirección y Municipio
     const fields = document.getElementById('deliveryFields');
     const muniSelect = document.getElementById('custMuni');
     
+    // Si alguno pide delivery, mostramos campos
     if (isDeliveryVP || isDeliveryJP || isDeliveryAA) {
         fields.classList.remove('hidden');
         muniSelect.required = true;
@@ -1110,9 +1111,14 @@ const variant = {
         muniSelect.required = false;
     }
 
-    const muni = muniSelect.value;
+    const muni = muniSelect.value; // Ej: "Playa", "Habana del Este", etc.
 
-    // 3. Separar los Ítems
+    // 3. Definición de Zonas de "Periferia" para Proveedor AA
+    // Mapeamos los municipios que contienen las zonas que mencionaste:
+    // Guanabo (H. Este), Santiago (Boyeros), Santa Fe (Playa), Cotorro, Guanabacoa.
+    const peripheryMunis = ["Habana del Este", "Boyeros", "Playa", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo"];
+
+    // 4. Separar Carrito y Calcular Peso VP
     let itemsVP = [], itemsJP = [], itemsAA = [];
     let weightVP = 0;
 
@@ -1126,14 +1132,14 @@ const variant = {
         }
     });
 
-    // 4. Calcular cuántos paquetes son en total (para poner "Envío 1 de 2")
+    // Contadores para el diseño visual
     let totalPackages = (itemsVP.length > 0 ? 1 : 0) + (itemsJP.length > 0 ? 1 : 0) + (itemsAA.length > 0 ? 1 : 0);
     let currentPackage = 1;
 
     const receiptContainer = document.getElementById('liveReceipt');
     receiptContainer.innerHTML = ''; 
 
-    // --- PAQUETE 1: VP (General) ---
+    // --- CÁLCULO PROVEEDOR VP (Regla de Peso) ---
     if (itemsVP.length > 0) {
         const payMethod = document.getElementById('payMethodVP').value;
         let subtotal = itemsVP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
@@ -1141,18 +1147,21 @@ const variant = {
         let statusLine = "📍 Recogida: Centro Habana";
 
         if (isDeliveryVP) {
+            // REGLA VP APLICADA:
+            // 0.1 a 50lb -> $1 | 50.1 a 180lb -> $3 | >180.1 -> $10
             if (weightVP <= 50) shippingCost = 1;
             else if (weightVP <= 180) shippingCost = 3;
             else shippingCost = 10;
-            statusLine = `🚚 Envío a Domicilio ($${shippingCost})`;
+            
+            statusLine = `🚚 Envío (${weightVP.toFixed(1)} lb): $${shippingCost} USD`;
         }
 
         let total = subtotal + shippingCost;
         let finalStr = `$${formatPrice(total)} USD`;
         
-        // Conversión si paga en CUP
+        // Ajuste si paga en CUP
         if (payMethod.includes("CUP")) {
-            const match = payMethod.match(/\+(\d+)/); // Busca si hay "+X" en el string
+            const match = payMethod.match(/\+(\d+)/);
             let rate = globalExchangeRate + (match ? parseFloat(match[1]) : 0);
             finalStr = `${formatPrice(total * rate)} CUP`;
         }
@@ -1164,13 +1173,18 @@ const variant = {
         currentPackage++;
     }
 
-    // --- PAQUETE 2: JP (Mobiliario) ---
+    // --- CÁLCULO PROVEEDOR JP (Regla Habana del Este) ---
     if (itemsJP.length > 0) {
         const payMethod = document.getElementById('payMethodJP').value;
         let subtotal = itemsJP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingInfo = isDeliveryJP 
-            ? `🚚 Flete Camión: ~${muni === "Habana del Este" ? "10,000" : "8,000"} CUP` 
-            : `📍 Recogida: Fontanar`;
+        let shippingInfo = "📍 Recogida: Fontanar";
+        
+        if (isDeliveryJP) {
+            // REGLA JP APLICADA:
+            // Habana del Este = 10,000 CUP, Resto = 8,000 CUP
+            let flete = (muni === "Habana del Este") ? 10000 : 8000;
+            shippingInfo = `🚚 Flete Camión: ${flete.toLocaleString()} CUP`;
+        }
 
         let finalStr = `$${formatPrice(subtotal)} USD`;
         if (payMethod.includes("EUR")) finalStr = `€${formatPrice(subtotal)} EUR`;
@@ -1182,17 +1196,28 @@ const variant = {
         currentPackage++;
     }
 
-    // --- PAQUETE 3: AA (Tecnología) ---
+    // --- CÁLCULO PROVEEDOR AA (Regla Periferia) ---
     if (itemsAA.length > 0) {
         const payMethod = document.getElementById('payMethodAA').value;
         let subtotal = itemsAA.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingInfo = isDeliveryAA 
-            ? `🚚 Envío Especializado (Tarifa Variable)` 
-            : `📍 Recogida: Vedado`;
-        
-        let finalStr = `$${formatPrice(subtotal)} USD`;
-        // AA suele cobrar envío aparte al mensajero, así que dejamos el precio del producto limpio
-        if (isDeliveryAA) finalStr += " (+Envío)";
+        let shippingInfo = "📍 Recogida: Vedado";
+        let deliveryCostAA = 0;
+
+        if (isDeliveryAA) {
+            // REGLA AA APLICADA:
+            // Si el municipio está en la lista de periferia -> $5, si no -> Gratis
+            if (peripheryMunis.includes(muni)) {
+                deliveryCostAA = 5;
+                shippingInfo = `🚚 Envío Periferia: $5 USD`;
+            } else {
+                deliveryCostAA = 0;
+                shippingInfo = `🚚 Envío Habana: GRATIS`;
+            }
+        }
+
+        // Sumamos el envío al total mostrado para que el cliente sepa cuánto preparar
+        let total = subtotal + deliveryCostAA;
+        let finalStr = `$${formatPrice(total)} USD`;
 
         receiptContainer.innerHTML += generateShipmentCard(
             currentPackage, totalPackages, "ALMACÉN TECNOLOGÍA (AA)", "purple", "fa-microchip",
@@ -1266,80 +1291,87 @@ function generateReceiptBlock(code, color, items, subtotal, shippingHtml, totalS
         </div>`;
 }
 
-        function submitOrder(e) {
+    function submitOrder(e) {
     e.preventDefault();
     const name = document.getElementById('custName').value;
     const ci = document.getElementById('custCI').value;
+    const muniSelect = document.getElementById('custMuni');
+    const muni = muniSelect.options[muniSelect.selectedIndex].text;
+    const isMuniPeriphery = ["Habana del Este", "Boyeros", "Playa", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo"].includes(muniSelect.value);
     
-    // Recopilar items por grupo
+    // Recopilar items
     let itemsVP = [], itemsJP = [], itemsAA = [];
+    let weightVP = 0;
     cart.forEach(item => {
         const supplier = (item.variant.supplier || "").toUpperCase();
         if (supplier.includes("JP")) itemsJP.push(item);
         else if (supplier.includes("AA")) itemsAA.push(item);
-        else itemsVP.push(item);
+        else {
+            itemsVP.push(item);
+            weightVP += ((item.variant.weight || 0) * item.quantity);
+        }
     });
 
-    // Encabezado General
-    let msg = `👋 *HOLA MULTISTORE* \n`;
-    msg += `Soy *${name}* (CI: ${ci}).\nQuiero confirmar el siguiente pedido:\n\n`;
+    let msg = `👋 *NUEVO PEDIDO MULTISTORE* \n`;
+    msg += `👤 Cliente: *${name}* \n🆔 CI: ${ci}\n`;
+    
+    // Añadimos la dirección al principio si aplica
+    const needsDelivery = document.querySelector('select[id^="deliveryMethod"][value="delivery"]') !== null;
+    if (needsDelivery) {
+        msg += `📍 Municipio: *${muni}*\n`;
+        msg += `🏠 Dirección: ${document.getElementById('custAddress').value}\n`;
+    }
     msg += `--------------------------------\n`;
 
-    // --- BLOQUE 1: VP ---
+    // --- BLOQUE VP ---
     if (itemsVP.length > 0) {
-        const pay = document.getElementById('payMethodVP').value;
-        const del = document.getElementById('deliveryMethodVP').value === 'delivery' ? 'DOMICILIO' : 'RECOGIDA';
-        msg += `📦 *PAQUETE #1 (General)*\n`;
-        itemsVP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name} (${i.variant.color || 'Std'})\n`);
-        msg += `   💳 Pago: ${pay}\n`;
-        msg += `   🚚 Entrega: ${del}\n`;
+        const isDel = document.getElementById('deliveryMethodVP').value === 'delivery';
+        msg += `📦 *ORDEN #1 (General - VP)*\n`;
+        itemsVP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
+        
+        if(isDel) {
+            let cost = (weightVP <= 50) ? 1 : (weightVP <= 180 ? 3 : 10);
+            msg += `   🚚 Envío: DOMICILIO ($${cost} USD)\n`;
+        } else {
+            msg += `   📍 Entrega: RECOGIDA (Centro Habana)\n`;
+        }
+        msg += `   💳 Método: ${document.getElementById('payMethodVP').value}\n`;
         msg += `--------------------------------\n`;
     }
 
-    // --- BLOQUE 2: JP ---
+    // --- BLOQUE JP ---
     if (itemsJP.length > 0) {
-        const pay = document.getElementById('payMethodJP').value;
-        const del = document.getElementById('deliveryMethodJP').value === 'delivery' ? 'CAMIÓN' : 'RECOGIDA';
-        msg += `🪑 *PAQUETE #2 (Mobiliario)*\n`;
+        const isDel = document.getElementById('deliveryMethodJP').value === 'delivery';
+        msg += `🪑 *ORDEN #2 (Mobiliario - JP)*\n`;
         itemsJP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
-        msg += `   💳 Pago: ${pay}\n`;
-        msg += `   🚚 Entrega: ${del}\n`;
+        
+        if(isDel) {
+            let cost = (muniSelect.value === "Habana del Este") ? "10,000" : "8,000";
+            msg += `   🚚 Flete: CAMIÓN (${cost} CUP)\n`;
+        } else {
+            msg += `   📍 Entrega: RECOGIDA (Fontanar)\n`;
+        }
+        msg += `   💳 Método: ${document.getElementById('payMethodJP').value}\n`;
         msg += `--------------------------------\n`;
     }
 
-    // --- BLOQUE 3: AA ---
+    // --- BLOQUE AA ---
     if (itemsAA.length > 0) {
-        const pay = document.getElementById('payMethodAA').value;
-        const del = document.getElementById('deliveryMethodAA').value === 'delivery' ? 'MENSAJERÍA' : 'RECOGIDA';
-        msg += `💻 *PAQUETE #3 (Tecnología)*\n`;
+        const isDel = document.getElementById('deliveryMethodAA').value === 'delivery';
+        msg += `💻 *ORDEN #3 (Tecnología - AA)*\n`;
         itemsAA.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
-        msg += `   💳 Pago: ${pay}\n`;
-        msg += `   🚚 Entrega: ${del}\n`;
+        
+        if(isDel) {
+            let cost = isMuniPeriphery ? "$5 USD" : "GRATIS";
+            msg += `   🚚 Envío: MENSAJERÍA (${cost})\n`;
+        } else {
+            msg += `   📍 Entrega: RECOGIDA (Vedado)\n`;
+        }
+        msg += `   💳 Método: ${document.getElementById('payMethodAA').value}\n`;
         msg += `--------------------------------\n`;
     }
 
-    // Datos de Entrega (solo si aplica)
-    const elDelVP = document.getElementById('deliveryMethodVP');
-    const elDelJP = document.getElementById('deliveryMethodJP');
-    const elDelAA = document.getElementById('deliveryMethodAA');
-    const isDelivery = (elDelVP && elDelVP.value === 'delivery') || 
-                       (elDelJP && elDelJP.value === 'delivery') || 
-                       (elDelAA && elDelAA.value === 'delivery');
-
-    if (isDelivery) {
-        const address = document.getElementById('custAddress').value;
-        const muni = document.getElementById('custMuni').options[document.getElementById('custMuni').selectedIndex].text;
-        msg += `📍 *DATOS DE ENTREGA:*\n`;
-        msg += `   Municipio: ${muni}\n`;
-        msg += `   Dirección: ${address}\n`;
-    }
-
-    msg += `\n✅ *Entiendo que los paquetes pueden llegar por separado.*`;
-
-    // Enviar
     window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
-    
-    // Limpieza
     closeOrderForm();
     cart = []; 
     updateCartCount();
