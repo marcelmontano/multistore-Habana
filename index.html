@@ -534,78 +534,111 @@
 
     // --- CONFIGURACIÓN MAESTRA DE PROVEEDORES ---
     // Aquí definimos las reglas exactas que me diste
+    // --- CONFIGURACIÓN MAESTRA DE PROVEEDORES (ACTUALIZADA) ---
     const SUPPLIER_RULES = {
-        "AS": {
-            name: "Almacén Sankey (AS)",
-            color: "red",
-            icon: "fa-fan",
-            currencyInfo: "USD, Zelle, Bizum, Transf. Int, CUP (+10)",
-            cupMode: "global_plus_10",
-            shippingRule: "fixed_item", // Regla: Costo fijo por tipo de item
-            defaultShipping: 4 // Costo base si no se detecta tipo
-        },
-        "ACA": {
-            name: "Almacén ACA",
-            color: "cyan",
-            icon: "fa-plug",
-            currencyInfo: "USD, USDT, Zelle(>100), CUP (+10), Transf(+15)",
-            cupMode: "global_plus_10",
-            shippingRule: "fixed_item",
-            defaultShipping: 4
-        },
-        "AA": {
-            name: "Almacén Tec (AA)",
-            color: "purple",
-            icon: "fa-microchip",
-            currencyInfo: "USD, Euros (x1.05), CUP (Fijo 470)",
-            cupMode: "fixed_470", // Tasa fija especial
-            shippingRule: "zone_aa", // Regla especial periferia
-            defaultShipping: 0
-        },
-        "ATHV": {
-            name: "Almacén Hogar (ATHV)",
-            color: "pink",
-            icon: "fa-fire-burner",
-            currencyInfo: "USD, Euros (1x1), CUP (+10)",
-            cupMode: "global_plus_10",
-            shippingRule: "flat_4", // Siempre 4 USD
-            defaultShipping: 4
-        },
-        "ATCPB": {
-            name: "Almacén Baterías (ATCPB)",
-            color: "yellow",
-            icon: "fa-car-battery",
-            currencyInfo: "USD, Euros, Zelle (1x1)",
-            cupMode: "none", // No acepta CUP según tu tabla (o no especificado)
-            shippingRule: "free_except_far", // Gratis excepto Cotorro/Habana Este
-            defaultShipping: 0
-        },
-        "AQ": {
-            name: "Almacén Químicos (AQ)",
-            color: "indigo",
-            icon: "fa-fill-drip",
-            currencyInfo: "USD, Euros (1x1), Zelle(>1000), Tropipay",
-            cupMode: "none",
-            shippingRule: "flat_4",
-            defaultShipping: 4
-        },
         "VP": {
             name: "Almacén Varios (VP)",
+            categoryTitle: "Productos Varios",
             color: "orange",
             icon: "fa-box-open",
-            currencyInfo: "USD, Euros (1x1), CUP (+10)",
+            currencyInfo: "USD, Euros, CUP",
             cupMode: "global_plus_10",
-            shippingRule: "weight_vp", // Regla de peso
+            shippingRule: "weight_vp",
+            shippingText: "$1 - $5 USD", // Texto corto para la tarjeta
+            warranty: "7 Días - 6 Meses",
+            location: "Centro Habana",
             defaultShipping: 1
         },
         "JP": {
             name: "Almacén Mobiliario (JP)",
+            categoryTitle: "Mobiliario/Góndolas",
             color: "blue",
-            icon: "fa-chair",
-            currencyInfo: "USD, Euros (1x1), Zelle",
+            icon: "fa-warehouse", // Icono actualizado
+            currencyInfo: "USD, Euros, Zelle",
             cupMode: "none",
-            shippingRule: "zone_jp", // Regla de 8000/10000 CUP
-            defaultShipping: 0 // Se calcula en CUP
+            shippingRule: "zone_jp",
+            shippingText: "Flete ~8,000 CUP",
+            warranty: "Reposición (Piezas)",
+            location: "Fontanar",
+            defaultShipping: 0
+        },
+        "AA": {
+            name: "Almacén Tec (AA)",
+            categoryTitle: "Tecnología/Especial",
+            color: "purple",
+            icon: "fa-microchip",
+            currencyInfo: "USD, Euros (x1.05), CUP",
+            cupMode: "fixed_470",
+            shippingRule: "zone_aa",
+            shippingText: "Tarifa Variable",
+            warranty: "1 - 3 Meses",
+            location: "A Consultar",
+            defaultShipping: 0
+        },
+        "AS": {
+            name: "Almacén Sankey (AS)",
+            categoryTitle: "Clima y Electro",
+            color: "red",
+            icon: "fa-fan",
+            currencyInfo: "USD, Zelle, CUP",
+            cupMode: "global_plus_10",
+            shippingRule: "fixed_item",
+            shippingText: "Tarifa x Equipo",
+            warranty: "1 Mes - 1 Año",
+            location: "A Consultar",
+            defaultShipping: 4
+        },
+        "ACA": {
+            name: "Almacén ACA",
+            categoryTitle: "Electrodomésticos",
+            color: "cyan",
+            icon: "fa-plug",
+            currencyInfo: "USD, USDT, CUP",
+            cupMode: "global_plus_10",
+            shippingRule: "fixed_item",
+            shippingText: "$5 - $15 USD",
+            warranty: "3 - 6 Meses",
+            location: "A Consultar",
+            defaultShipping: 4
+        },
+        "ATHV": {
+            name: "Almacén Hogar (ATHV)",
+            categoryTitle: "Cocina y Hogar",
+            color: "pink",
+            icon: "fa-fire-burner",
+            currencyInfo: "USD, Euros, CUP",
+            cupMode: "global_plus_10",
+            shippingRule: "flat_4",
+            shippingText: "Fijo $4.00 USD",
+            warranty: "72 Horas",
+            location: "A Consultar",
+            defaultShipping: 4
+        },
+        "ATCPB": {
+            name: "Almacén Baterías (ATCPB)",
+            categoryTitle: "Auto y Energía",
+            color: "yellow",
+            icon: "fa-car-battery",
+            currencyInfo: "USD, Euros, Zelle",
+            cupMode: "none",
+            shippingRule: "free_except_far",
+            shippingText: "Gratis (Céntrico)",
+            warranty: "6 Meses",
+            location: "A Consultar",
+            defaultShipping: 0
+        },
+        "AQ": {
+            name: "Almacén Químicos (AQ)",
+            categoryTitle: "Mantenimiento",
+            color: "indigo",
+            icon: "fa-fill-drip",
+            currencyInfo: "Tropipay, Zelle",
+            cupMode: "none",
+            shippingRule: "flat_4",
+            shippingText: "Fijo $4.00 USD",
+            warranty: "No Aplica",
+            location: "A Consultar",
+            defaultShipping: 4
         }
     };
 
@@ -1103,50 +1136,135 @@
     function closeOrderForm() { document.getElementById('orderModal').classList.add('hidden'); }
 
     function submitOrder(e) {
-        e.preventDefault();
-        const name = document.getElementById('custName').value;
-        const ci = document.getElementById('custCI').value;
-        const muni = document.getElementById('custMuni').value;
-        const address = document.getElementById('custAddress').value;
-        
-        let msg = `👋 *NUEVO PEDIDO MULTISTORE*\n`;
-        msg += `👤 Cliente: *${name}*\n🆔 CI: ${ci}\n`;
-        // --- INICIO BLOQUE AFILIADO ---
-    if (currentAffiliate) {
-        msg += `🤝 *REFERIDO POR: ${currentAffiliate}*\n`;
-    }
-    // --- FIN BLOQUE AFILIADO ---
-        if(!document.getElementById('deliveryFields').classList.contains('hidden')) {
-            msg += `📍 Destino: ${muni}\n🏠 Dir: ${address}\n`;
-        }
-        msg += `================================\n`;
-
-        const suppliersInCart = [...new Set(cart.map(i => i.variant.supplier))];
-        suppliersInCart.forEach(code => {
-            const rule = SUPPLIER_RULES[code];
-            const items = cart.filter(i => i.variant.supplier === code);
-            const method = document.getElementById(`payMethod_${code}`).value;
-            const del = document.getElementById(`deliveryMethod_${code}`).value;
-
-            msg += `📦 *PAQUETE: ${rule.name}*\n`;
-            items.forEach(i => msg += `   ▪ ${i.quantity}x ${i.name}\n`);
-            msg += `   💳 Pago: ${method}\n`;
-            msg += `   🚚 Entrega: ${del === 'delivery' ? 'A Domicilio' : 'Recogida Sede'}\n`;
-            msg += `--------------------------------\n`;
-        });
-
-        window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
-        cart = [];
-        updateCartCount();
-        closeOrderForm();
-    }
+    e.preventDefault();
+    const name = document.getElementById('custName').value;
+    const ci = document.getElementById('custCI').value;
+    const muni = document.getElementById('custMuni').value;
+    const address = document.getElementById('custAddress').value;
     
-    function filterProducts() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        if(!q) { renderGrid(groupedProducts); return; }
-        const f = groupedProducts.filter(g => g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q));
-        renderGrid(f);
+    // Detectar si es periferia para cálculos de envío
+    const isPeriphery = ["Habana del Este", "Boyeros", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo", "San Miguel"].includes(muni);
+    const isFarPeriphery = ["Cotorro", "Habana del Este"].includes(muni);
+
+    let msg = `👋 *NUEVO PEDIDO DETALLADO*\n`;
+    msg += `👤 Cliente: *${name}*\n🆔 CI: ${ci}\n`;
+    
+    if (currentAffiliate) {
+        msg += `🤝 Gestor: ${currentAffiliate}\n`;
     }
+
+    if(!document.getElementById('deliveryFields').classList.contains('hidden')) {
+        msg += `📍 Destino: ${muni}\n🏠 Dir: ${address}\n`;
+    }
+    msg += `================================\n`;
+
+    const suppliersInCart = [...new Set(cart.map(i => i.variant.supplier))];
+    
+    suppliersInCart.forEach(code => {
+        const rule = SUPPLIER_RULES[code] || SUPPLIER_RULES["VP"];
+        const items = cart.filter(i => i.variant.supplier === code);
+        const method = document.getElementById(`payMethod_${code}`).value;
+        const del = document.getElementById(`deliveryMethod_${code}`).value;
+
+        // 1. CALCULAR SUBTOTAL PRODUCTOS
+        let subtotalUSD = items.reduce((sum, i) => sum + (i.variant.price * i.quantity), 0);
+        
+        // 2. CALCULAR ENVÍO EXACTO
+        let shippingCostUSD = 0;
+        let shippingDetails = "Recogida en Sede";
+
+        if (del === 'delivery') {
+            if (rule.shippingRule === 'fixed_item') {
+                // Lógica de AS/ACA
+                let accumShip = 0;
+                items.forEach(i => {
+                    let nameLower = i.name.toLowerCase();
+                    let itemShip = rule.defaultShipping;
+                    if(nameLower.includes('refrigerador') || nameLower.includes('nevera 12') || nameLower.includes('nevera 8') || nameLower.includes('exhibidora')) itemShip = (nameLower.includes('20 pies')) ? 15 : 10; 
+                    else if(nameLower.includes('nevera') || nameLower.includes('lavadora') || nameLower.includes('tv 60') || nameLower.includes('tv 50')) itemShip = 5;
+                    accumShip += (itemShip * i.quantity);
+                });
+                shippingCostUSD = accumShip;
+                shippingDetails = "Tarifa x Producto";
+            }
+            else if (rule.shippingRule === 'zone_aa') {
+                // Lógica AA
+                shippingCostUSD = isPeriphery ? 5 : 0;
+                shippingDetails = isPeriphery ? "Envío Periferia" : "Envío Habana (Gratis)";
+            }
+            else if (rule.shippingRule === 'flat_4') {
+                // Lógica ATHV
+                shippingCostUSD = 4;
+                shippingDetails = "Tarifa Plana";
+            }
+            else if (rule.shippingRule === 'free_except_far') {
+                // Lógica Baterías
+                if (isFarPeriphery) { shippingCostUSD = 10; shippingDetails = "Zona Lejana"; }
+                else { shippingCostUSD = 0; shippingDetails = "Envío Incluido"; }
+            }
+            else if (rule.shippingRule === 'weight_vp') {
+                // Lógica VP
+                let totalWeight = items.reduce((w, i) => w + (i.variant.weight * i.quantity), 0);
+                if (totalWeight <= 50) shippingCostUSD = 1;
+                else if (totalWeight <= 180) shippingCostUSD = 3;
+                else shippingCostUSD = 10;
+                shippingDetails = `Por Peso (${totalWeight}lb)`;
+            }
+            else if (rule.shippingRule === 'zone_jp') {
+                // Lógica JP (Se cobra aparte en CUP generalmente)
+                let costCUP = (muni === "Habana del Este") ? 10000 : 8000;
+                shippingDetails = `Flete Aparte (~${costCUP} CUP)`;
+                shippingCostUSD = 0; // No se suma al total en USD si se paga directo al chofer
+            }
+        }
+
+        // 3. CALCULAR TOTAL Y CONVERSIÓN
+        let totalUSD = subtotalUSD + shippingCostUSD;
+        let finalDisplay = "";
+        let exchangeRateUsed = "";
+
+        if (method === "USD" || method === "USDT" || method.includes("Zelle") || method.includes("Tropipay")) {
+            finalDisplay = `$${formatPrice(totalUSD)} USD`;
+        } 
+        else if (method === "EUR") {
+            if (code === "AA") {
+                let eurNeeded = totalUSD / 1.05;
+                finalDisplay = `€${formatPrice(eurNeeded)} EUR`;
+                exchangeRateUsed = "(Tasa 1.05)";
+            } else {
+                finalDisplay = `€${formatPrice(totalUSD)} EUR`;
+                exchangeRateUsed = "(1x1)";
+            }
+        }
+        else if (method.includes("CUP")) {
+            if (code === "AA") {
+                finalDisplay = `${formatPrice(totalUSD * 470)} CUP`;
+                exchangeRateUsed = "(Fijo 470)";
+            } else {
+                let rate = globalExchangeRate + 10;
+                finalDisplay = `${formatPrice(totalUSD * rate)} CUP`;
+                exchangeRateUsed = `(Tasa ${rate})`;
+            }
+        }
+
+        // 4. CONSTRUIR EL BLOQUE DEL MENSAJE
+        msg += `📦 *PROVEEDOR: ${rule.name}*\n`;
+        msg += `📝 *Detalle Productos:*\n`;
+        items.forEach(i => msg += `   ▪ ${i.quantity}x ${i.name} ($${i.variant.price} c/u)\n`);
+        
+        msg += `   ----------------\n`;
+        msg += `   💵 Subtotal Items: $${formatPrice(subtotalUSD)} USD\n`;
+        msg += `   🚛 Envío: $${formatPrice(shippingCostUSD)} USD (${shippingDetails})\n`;
+        msg += `   💳 Método: ${method} ${exchangeRateUsed}\n`;
+        msg += `   💰 *TOTAL A COBRAR: ${finalDisplay}*\n`;
+        msg += `================================\n`;
+    });
+
+    window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
+    cart = [];
+    updateCartCount();
+    closeOrderForm();
+}
 </script>
 
     <!-- 4. SOCIAL PROOF: WALL OF TRUTH (Integración Real) -->
@@ -1355,97 +1473,69 @@
     </div>
 </section>
 
-<!-- SECCIÓN LOGÍSTICA DISTRIBUIDA (ACTUALIZADA SEGÚN IMAGEN) -->
-    <section class="py-16 bg-[#0f172a] border-t border-gray-800">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-10">
-                <h3 class="text-3xl font-bold text-white mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
-                <p class="text-gray-400 text-sm max-w-2xl mx-auto">
-                    Cada proveedor tiene sus propias reglas de garantía y envío. 
-                    <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-6">
-                
-                <!-- 1. ALMACÉN VP (Naranja) -->
-                <div class="bg-[#0f172a] rounded-xl border border-orange-900/50 p-6 relative overflow-hidden group hover:border-orange-500 transition duration-300">
-                    <div class="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN VP</div>
-                    
-                    <div class="flex items-center gap-3 mb-6">
-                        <i class="fas fa-box-open text-orange-500 text-3xl"></i>
-                        <h4 class="text-white font-bold text-lg">Productos Varios</h4>
-                    </div>
-
-                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
-                            <span class="text-green-400 font-bold text-sm">7 Días - 6 Meses</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Envío Habana:</span>
-                            <span class="text-white font-bold text-sm">$1 - $5 USD</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-1">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
-                            <span class="text-gray-300 text-sm">Centro Habana</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. ALMACÉN JP (Azul) -->
-                <div class="bg-[#0f172a] rounded-xl border border-blue-900/50 p-6 relative overflow-hidden group hover:border-blue-500 transition duration-300">
-                    <div class="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN JP</div>
-                    
-                    <div class="flex items-center gap-3 mb-6">
-                        <i class="fas fa-warehouse text-blue-500 text-3xl"></i>
-                        <h4 class="text-white font-bold text-lg">Mobiliario/Góndolas</h4>
-                    </div>
-
-                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
-                            <span class="text-green-400 font-bold text-xs text-right">Reposición (Rotura/Piezas)</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Flete Camión:</span>
-                            <span class="text-white font-bold text-sm">~8,000 CUP</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-1">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
-                            <span class="text-gray-300 text-sm">Fontanar</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. ALMACÉN AA (Morado) -->
-                <div class="bg-[#0f172a] rounded-xl border border-purple-900/50 p-6 relative overflow-hidden group hover:border-purple-500 transition duration-300">
-                    <div class="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN AA</div>
-                    
-                    <div class="flex items-center gap-3 mb-6">
-                        <i class="fas fa-plug text-purple-500 text-3xl"></i>
-                        <h4 class="text-white font-bold text-lg">Tecnología/Especial</h4>
-                    </div>
-
-                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
-                            <span class="text-green-400 font-bold text-sm">1 - 3 Meses</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Mensajería:</span>
-                            <span class="text-white font-bold text-sm">Tarifa Variable</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-1">
-                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
-                            <span class="text-gray-300 text-sm italic">A Consultar</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+<!-- SECCIÓN LOGÍSTICA DISTRIBUIDA DINÁMICA -->
+<section class="py-16 bg-[#0f172a] border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h3 class="text-3xl font-bold text-white mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
+            <p class="text-gray-400 text-sm max-w-2xl mx-auto">
+                Cada proveedor tiene sus propias reglas de garantía y envío. 
+                <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
+            </p>
         </div>
-    </section>
+
+        <!-- AQUÍ SE GENERAN LAS TARJETAS AUTOMÁTICAMENTE -->
+        <div id="logistics-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        
+    </div>
+</section>
+
+<!-- SCRIPT PARA GENERAR TARJETAS LOGÍSTICAS -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const grid = document.getElementById('logistics-grid');
+        if(!grid) return;
+        
+        // Iteramos sobre todos los proveedores definidos en SUPPLIER_RULES
+        Object.keys(SUPPLIER_RULES).forEach(key => {
+            const s = SUPPLIER_RULES[key];
+            
+            // Creamos la tarjeta HTML
+            const card = document.createElement('div');
+            // Clases base + borde del color del proveedor
+            card.className = `bg-[#0f172a] rounded-xl border border-${s.color}-900/50 p-6 relative overflow-hidden group hover:border-${s.color}-500 transition duration-300`;
+            
+            card.innerHTML = `
+                <div class="absolute top-0 right-0 bg-${s.color}-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10 uppercase">
+                    ALMACÉN ${key}
+                </div>
+                
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-full bg-${s.color}-900/30 flex items-center justify-center border border-${s.color}-500/30">
+                        <i class="fas ${s.icon} text-${s.color}-500 text-2xl"></i>
+                    </div>
+                    <h4 class="text-white font-bold text-lg leading-tight">${s.categoryTitle || s.name}</h4>
+                </div>
+
+                <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Garantía:</span>
+                        <span class="text-green-400 font-bold text-xs text-right">${s.warranty || 'Consultar'}</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Envío Habana:</span>
+                        <span class="text-white font-bold text-xs text-right">${s.shippingText || 'A Cotizar'}</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Recogida:</span>
+                        <span class="text-gray-300 text-xs text-right font-medium italic">${s.location || 'Sede Central'}</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    });
+</script>
 
     <!-- SECCIÓN DE CONFIANZA Y PREGUNTAS (ESTILO HORMOZI) -->
 <section class="py-12 bg-black/50 border-t border-gray-800">
