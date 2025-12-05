@@ -1355,92 +1355,97 @@
     </div>
 </section>
 
-<!-- SECCIÓN LOGÍSTICA MULTI-ALMACÉN (CORREGIDA) -->
-<section class="py-12 bg-[#020617] border-t border-gray-800">
-    <div class="max-w-6xl mx-auto px-4">
-        <div class="text-center mb-10">
-            <h3 class="text-white font-bold text-2xl md:text-3xl mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
-            <p class="text-gray-400 text-sm max-w-2xl mx-auto">
-                Cada proveedor tiene sus propias reglas de garantía y envío.
-                <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
-            </p>
+<!-- SECCIÓN LOGÍSTICA DISTRIBUIDA (ACTUALIZADA SEGÚN IMAGEN) -->
+    <section class="py-16 bg-[#0f172a] border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-white mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
+                <p class="text-gray-400 text-sm max-w-2xl mx-auto">
+                    Cada proveedor tiene sus propias reglas de garantía y envío. 
+                    <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                
+                <!-- 1. ALMACÉN VP (Naranja) -->
+                <div class="bg-[#0f172a] rounded-xl border border-orange-900/50 p-6 relative overflow-hidden group hover:border-orange-500 transition duration-300">
+                    <div class="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN VP</div>
+                    
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-box-open text-orange-500 text-3xl"></i>
+                        <h4 class="text-white font-bold text-lg">Productos Varios</h4>
+                    </div>
+
+                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
+                            <span class="text-green-400 font-bold text-sm">7 Días - 6 Meses</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Envío Habana:</span>
+                            <span class="text-white font-bold text-sm">$1 - $5 USD</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
+                            <span class="text-gray-300 text-sm">Centro Habana</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ALMACÉN JP (Azul) -->
+                <div class="bg-[#0f172a] rounded-xl border border-blue-900/50 p-6 relative overflow-hidden group hover:border-blue-500 transition duration-300">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN JP</div>
+                    
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-warehouse text-blue-500 text-3xl"></i>
+                        <h4 class="text-white font-bold text-lg">Mobiliario/Góndolas</h4>
+                    </div>
+
+                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
+                            <span class="text-green-400 font-bold text-xs text-right">Reposición (Rotura/Piezas)</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Flete Camión:</span>
+                            <span class="text-white font-bold text-sm">~8,000 CUP</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
+                            <span class="text-gray-300 text-sm">Fontanar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ALMACÉN AA (Morado) -->
+                <div class="bg-[#0f172a] rounded-xl border border-purple-900/50 p-6 relative overflow-hidden group hover:border-purple-500 transition duration-300">
+                    <div class="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10">ALMACÉN AA</div>
+                    
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-plug text-purple-500 text-3xl"></i>
+                        <h4 class="text-white font-bold text-lg">Tecnología/Especial</h4>
+                    </div>
+
+                    <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Garantía:</span>
+                            <span class="text-green-400 font-bold text-sm">1 - 3 Meses</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Mensajería:</span>
+                            <span class="text-white font-bold text-sm">Tarifa Variable</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-gray-500 text-xs uppercase font-bold">Recogida:</span>
+                            <span class="text-gray-300 text-sm italic">A Consultar</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-        
-        <!-- GRID DE 3 COLUMNAS (VP, JP, AA) -->
-        <div class="grid md:grid-cols-3 gap-4">
-            
-            <!-- 1. PROVEEDOR VP (General) -->
-            <div class="bg-gray-900/60 p-4 rounded-xl border border-orange-500/30 hover:border-orange-500 transition group relative">
-                <div class="absolute top-0 right-0 bg-orange-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN VP</div>
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-box-open text-orange-500 text-2xl"></i>
-                    <h4 class="text-white font-bold text-sm">Productos Varios</h4>
-                </div>
-                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Garantía:</span> 
-                        <span class="text-green-400 font-bold">7 Días - 6 Meses</span>
-                    </div>
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Envío Habana:</span> 
-                        <span class="text-white font-bold">$1 - $5 USD</span>
-                    </div>
-                    <div class="flex justify-between pt-1">
-                        <span class="text-gray-400">Recogida:</span> 
-                        <span class="text-white">Centro Habana</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. PROVEEDOR JP (Mobiliario) -->
-            <div class="bg-gray-900/60 p-4 rounded-xl border border-blue-500/30 hover:border-blue-500 transition group relative">
-                <div class="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN JP</div>
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-warehouse text-blue-500 text-2xl"></i>
-                    <h4 class="text-white font-bold text-sm">Mobiliario/Góndolas</h4>
-                </div>
-                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Garantía:</span> 
-                        <span class="text-green-400 font-bold text-[10px]">Reposición (Rotura/Piezas)</span>
-                    </div>
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Flete Camión:</span> 
-                        <span class="text-white font-bold">~8,000 CUP</span>
-                    </div>
-                    <div class="flex justify-between pt-1">
-                        <span class="text-gray-400">Recogida:</span> 
-                        <span class="text-white">Fontanar</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. PROVEEDOR AA (Tecnología) -->
-            <div class="bg-gray-900/60 p-4 rounded-xl border border-purple-500/30 hover:border-purple-500 transition group relative">
-                <div class="absolute top-0 right-0 bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded-bl">ALMACÉN AA</div>
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-plug text-purple-500 text-2xl"></i>
-                    <h4 class="text-white font-bold text-sm">Tecnología/Especial</h4>
-                </div>
-                <div class="bg-black/30 p-2 rounded text-xs space-y-2 border border-white/5">
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Garantía:</span> 
-                        <span class="text-green-400 font-bold">1 - 3 Meses</span>
-                    </div>
-                    <div class="flex justify-between border-b border-gray-700 pb-1">
-                        <span class="text-gray-400">Mensajería:</span> 
-                        <span class="text-white font-bold">Tarifa Variable</span>
-                    </div>
-                    <div class="flex justify-between pt-1">
-                        <span class="text-gray-400">Recogida:</span> 
-                        <span class="text-white italic">A Consultar</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
+    </section>
 
     <!-- SECCIÓN DE CONFIANZA Y PREGUNTAS (ESTILO HORMOZI) -->
 <section class="py-12 bg-black/50 border-t border-gray-800">
@@ -1626,5 +1631,104 @@
         </div>
     </div>
 </div>
+<!-- === NUEVO SISTEMA DE GESTORES === -->
+    
+    <!-- Botón Flotante para Vendedores (Visible siempre) -->
+    <button onclick="document.getElementById('managerModal').classList.remove('hidden')" class="fixed bottom-24 left-4 z-40 bg-gray-800/90 hover:bg-purple-600 text-purple-300 hover:text-white px-4 py-2 rounded-full border border-purple-500/50 transition backdrop-blur-sm shadow-lg flex items-center gap-2 text-xs font-bold animate-pulse">
+        <i class="fas fa-users"></i> Soy Vendedor
+    </button>
+
+    <!-- Modal Generador de Links -->
+    <div id="managerModal" class="fixed inset-0 bg-black/95 z-[3000] hidden flex items-center justify-center p-4 backdrop-blur-md" onclick="if(event.target === this) this.classList.add('hidden')">
+        <div class="bg-gray-900 border border-purple-500 rounded-2xl w-full max-w-md p-6 relative shadow-[0_0_50px_rgba(168,85,247,0.2)]">
+            <button onclick="document.getElementById('managerModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-3 border border-purple-500">
+                    <i class="fas fa-hand-holding-dollar text-2xl text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Panel de Gestor</h3>
+                <p class="text-gray-400 text-xs mt-2">Genera tu enlace único. Si un cliente compra usando este link, sabremos que es tuyo.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold mb-1 uppercase">Tu Nombre o Alias</label>
+                    <input type="text" id="managerName" placeholder="Ej: PedroVentas" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none transition text-sm" onkeyup="generateManagerLink()">
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 relative">
+                    <p class="text-[10px] text-gray-500 font-bold mb-1 uppercase">Tu Enlace para compartir:</p>
+                    <code id="managerResult" class="text-green-400 text-xs break-all block font-mono">Escribe tu nombre arriba...</code>
+                    
+                    <button onclick="copyManagerLink()" class="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-white text-[10px] px-2 py-1 rounded transition border border-gray-600">
+                        <i class="fas fa-copy"></i> Copiar
+                    </button>
+                </div>
+            </div>
+            
+            <p class="text-[10px] text-center text-gray-600 mt-4">
+                <i class="fas fa-info-circle"></i> El sistema guarda tu referencia en el teléfono del cliente automáticamente.
+            </p>
+        </div>
+    </div>
+
+    <!-- Script Lógico para Gestores -->
+    <script>
+        // 1. Generar Link
+        function generateManagerLink() {
+            const name = document.getElementById('managerName').value.trim().replace(/\s+/g, '');
+            const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            
+            if(name.length > 0) {
+                const finalUrl = `${baseUrl}?ref=${name}`;
+                document.getElementById('managerResult').innerText = finalUrl;
+            } else {
+                document.getElementById('managerResult').innerText = "Escribe tu nombre arriba...";
+            }
+        }
+
+        // 2. Copiar Link
+        function copyManagerLink() {
+            const text = document.getElementById('managerResult').innerText;
+            if(text.includes('...')) return;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('#managerModal button i.fa-copy').parentElement;
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
+                btn.classList.add('bg-green-600', 'border-green-500');
+                setTimeout(() => { 
+                    btn.innerHTML = original;
+                    btn.classList.remove('bg-green-600', 'border-green-500');
+                }, 2000);
+            });
+        }
+
+        // 3. Capturar Referido al Cargar (Sobreescribe lógica anterior para asegurar funcionamiento)
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+
+            if (refCode) {
+                localStorage.setItem('solarCubaRef', refCode);
+                
+                // Notificación visual de éxito
+                const container = document.getElementById('toast-container');
+                if(container) {
+                    const toast = document.createElement('div');
+                    toast.className = "toast-notification p-4 rounded-lg flex items-center gap-3 text-white min-w-[300px] animate-slide-in border-l-4 border-purple-500 bg-gray-900 shadow-2xl z-50";
+                    toast.innerHTML = `
+                        <div class="bg-purple-500/20 p-2 rounded-full"><i class="fas fa-handshake text-purple-400"></i></div>
+                        <div class="text-sm">
+                            <p class="font-bold text-purple-300">Gestor Detectado</p>
+                            <p class="text-xs text-gray-300">Te atiende: <strong class="text-white">${refCode}</strong></p>
+                        </div>`;
+                    container.appendChild(toast);
+                    setTimeout(() => toast.remove(), 5000);
+                }
+            }
+        });
+    </script>
 </body> <!-- Aquí cierra el body -->
 </html>
