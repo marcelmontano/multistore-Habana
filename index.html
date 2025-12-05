@@ -516,920 +516,631 @@
     </div>
 
     <script>
-        const SHEET_ID = '2PACX-1vRfsFS5cy5p0n3N5b3_895SBwLV8goVeuCqwuAeSzEhvp-NXbgiVRG5m9D2t4_E-Ruj9gKf6-8gblBw';
-        const TARGET_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
-        const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(TARGET_URL);
+    // --- CONFIGURACIÓN DE LA HOJA DE CÁLCULO ---
+    const SHEET_ID = '2PACX-1vRfsFS5cy5p0n3N5b3_895SBwLV8goVeuCqwuAeSzEhvp-NXbgiVRG5m9D2t4_E-Ruj9gKf6-8gblBw';
+    const TARGET_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
+    const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(TARGET_URL);
 
-        let groupedProducts = []; 
-        let categories = new Set();
-        let currentGroup = null; 
-        let selectedVariant = null; 
-        let globalExchangeRate = 0;
-        let cart = [];
-        // ... (después de let cart = []; )
+    // --- VARIABLES GLOBALES ---
+    let groupedProducts = []; 
+    let categories = new Set();
+    let currentGroup = null; 
+    let selectedVariant = null; 
+    let globalExchangeRate = 0; // Tasa del día (se lee del Excel para VP, AS, etc.)
+    let cart = [];
+    let currentModalQty = 1;
 
-    let currentModalQty = 1; // <--- VARIABLE NUEVA PARA LA CANTIDAD
-
-    // FUNCIÓN PARA LOS BOTONES + Y -
-    function changeQty(amount) {
-        currentModalQty += amount;
-        
-        // Evitar que baje de 1
-        if (currentModalQty < 1) currentModalQty = 1; 
-        
-        // Actualizar el número visualmente en el modal
-        const display = document.getElementById('modalQtyDisplay');
-        if(display) {
-            display.innerText = currentModalQty;
+    // --- CONFIGURACIÓN MAESTRA DE PROVEEDORES ---
+    // Aquí definimos las reglas exactas que me diste
+    const SUPPLIER_RULES = {
+        "AS": {
+            name: "Almacén Sankey (AS)",
+            color: "red",
+            icon: "fa-fan",
+            currencyInfo: "USD, Zelle, Bizum, Transf. Int, CUP (+10)",
+            cupMode: "global_plus_10",
+            shippingRule: "fixed_item", // Regla: Costo fijo por tipo de item
+            defaultShipping: 4 // Costo base si no se detecta tipo
+        },
+        "ACA": {
+            name: "Almacén ACA",
+            color: "cyan",
+            icon: "fa-plug",
+            currencyInfo: "USD, USDT, Zelle(>100), CUP (+10), Transf(+15)",
+            cupMode: "global_plus_10",
+            shippingRule: "fixed_item",
+            defaultShipping: 4
+        },
+        "AA": {
+            name: "Almacén Tec (AA)",
+            color: "purple",
+            icon: "fa-microchip",
+            currencyInfo: "USD, Euros (x1.05), CUP (Fijo 470)",
+            cupMode: "fixed_470", // Tasa fija especial
+            shippingRule: "zone_aa", // Regla especial periferia
+            defaultShipping: 0
+        },
+        "ATHV": {
+            name: "Almacén Hogar (ATHV)",
+            color: "pink",
+            icon: "fa-fire-burner",
+            currencyInfo: "USD, Euros (1x1), CUP (+10)",
+            cupMode: "global_plus_10",
+            shippingRule: "flat_4", // Siempre 4 USD
+            defaultShipping: 4
+        },
+        "ATCPB": {
+            name: "Almacén Baterías (ATCPB)",
+            color: "yellow",
+            icon: "fa-car-battery",
+            currencyInfo: "USD, Euros, Zelle (1x1)",
+            cupMode: "none", // No acepta CUP según tu tabla (o no especificado)
+            shippingRule: "free_except_far", // Gratis excepto Cotorro/Habana Este
+            defaultShipping: 0
+        },
+        "AQ": {
+            name: "Almacén Químicos (AQ)",
+            color: "indigo",
+            icon: "fa-fill-drip",
+            currencyInfo: "USD, Euros (1x1), Zelle(>1000), Tropipay",
+            cupMode: "none",
+            shippingRule: "flat_4",
+            defaultShipping: 4
+        },
+        "VP": {
+            name: "Almacén Varios (VP)",
+            color: "orange",
+            icon: "fa-box-open",
+            currencyInfo: "USD, Euros (1x1), CUP (+10)",
+            cupMode: "global_plus_10",
+            shippingRule: "weight_vp", // Regla de peso
+            defaultShipping: 1
+        },
+        "JP": {
+            name: "Almacén Mobiliario (JP)",
+            color: "blue",
+            icon: "fa-chair",
+            currencyInfo: "USD, Euros (1x1), Zelle",
+            cupMode: "none",
+            shippingRule: "zone_jp", // Regla de 8000/10000 CUP
+            defaultShipping: 0 // Se calcula en CUP
         }
-    }
+    };
 
-    // ... (aquí sigue el // --- SOCIAL PROOF ...)
+    // --- SOCIAL PROOF ---
+    const names = ["Yusmary", "Alejandro", "Carlos", "Beatriz", "Dayanara", "Jorge"];
+    const zones = ["Vedado", "Playa", "Alamar", "Marianao", "Víbora"];
+    const actions = ["recibió su Split", "compró una nevera", "aseguró su pedido"];
 
-        // --- SOCIAL PROOF (Adaptado a Productos Generales/Equipos) ---
-        const names = ["Yusmary", "Alejandro", "Carlos", "Beatriz", "Dayanara", "Jorge", "Marta", "Raudel"];
-        const zones = ["Vedado", "Playa", "Alamar", "Marianao", "Víbora", "Centro Habana"];
-        
-        // Acciones: Enfocadas en "Conseguir lo que no hay" y "Proteger el dinero"
-        const actions = [
-            "acaba de recibir su pedido en casa",
-            "aseguró equipamiento antes que suba el precio",
-            "evitó salir a buscar transporte",
-            "aprovechó el stock disponible",
-            "invirtió en productos duraderos"
-        ];
-
-        function startSocialProof() {
-            setTimeout(() => showRandomToast(), 5000);
-            setInterval(() => showRandomToast(), Math.floor(Math.random() * (25000 - 10000 + 1) + 10000));
-        }
-
-        function showRandomToast() {
+    function startSocialProof() {
+        setInterval(() => {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const name = names[Math.floor(Math.random() * names.length)];
             const zone = zones[Math.floor(Math.random() * zones.length)];
             const action = actions[Math.floor(Math.random() * actions.length)];
             
             const toast = document.createElement('div');
             toast.className = "toast-notification p-4 rounded-lg flex items-center gap-4 text-white min-w-[250px] animate-slide-in mb-3";
-            toast.innerHTML = `
-                <div class="bg-green-500/20 p-2 rounded-full"><i class="fas fa-box-open text-green-500"></i></div>
-                <div class="text-xs">
-                    <span class="font-bold text-orange-400">${name}</span> de ${zone}<br>
-                    ${action} un pedido ahora mismo.
-                </div>
-            `;
+            toast.innerHTML = `<div class="bg-green-500/20 p-2 rounded-full"><i class="fas fa-check text-green-500"></i></div>
+                               <div class="text-xs"><span class="font-bold text-orange-400">${name}</span> (${zone})<br>${action}.</div>`;
             container.appendChild(toast);
-            setTimeout(() => { 
-                toast.classList.replace('animate-slide-in', 'animate-fade-out'); 
-                setTimeout(() => toast.remove(), 500); 
-            }, 5000);
+            setTimeout(() => { toast.remove() }, 5000);
+        }, 15000);
+    }
+
+    // --- UTILIDADES ---
+    function cleanImageUrl(cellData) {
+        if (!cellData) return null;
+        const match = cellData.trim().match(/https?:\/\/[^"\s\)]+/);
+        return match ? match[0] : (cellData.startsWith('http') ? cellData.trim() : null);
+    }
+
+    function parsePrice(priceStr) {
+        if(!priceStr) return 0;
+        let clean = priceStr.toString().replace('$', '').trim().replace(',', '.').replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+    }
+
+    function formatPrice(num) {
+        return num.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function extractWeight(desc) {
+        if (!desc) return 0;
+        const match = desc.match(/Peso:?\s*([\d\.]+)\s*lb/i);
+        return match ? parseFloat(match[1]) : 0;
+    }
+
+    function changeQty(amount) {
+        currentModalQty += amount;
+        if (currentModalQty < 1) currentModalQty = 1; 
+        const display = document.getElementById('modalQtyDisplay');
+        if(display) display.innerText = currentModalQty;
+    }
+
+    // --- CARGA DE DATOS ---
+    Papa.parse(PROXY_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+            if(results.data.length === 0) { showError("No hay datos."); return; }
+            parseData(results.data);
+            startSocialProof();
+        },
+        error: function() { showError("Error de conexión."); }
+    });
+
+    function showError(msg) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-message').innerText = msg;
+        document.getElementById('error-message').classList.remove('hidden');
+    }
+
+    function parseData(data) {
+        const rateRow = data.find(r => r.TasaCambio && !isNaN(parseFloat(r.TasaCambio)));
+        if(rateRow) {
+            globalExchangeRate = parseFloat(rateRow.TasaCambio);
+            document.getElementById('displayRate').innerText = formatPrice(globalExchangeRate);
         }
 
-        // --- UTILIDADES ---
-        function cleanImageUrl(cellData) {
-            if (!cellData) return null;
-            const match = cellData.trim().match(/https?:\/\/[^"\s\)]+/);
-            if (match) return match[0];
-            return cellData.startsWith('http') ? cellData.trim() : null;
-        }
+        let groupsMap = new Map();
 
-        function parsePrice(priceStr) {
-            if(!priceStr) return 0;
-            let clean = priceStr.toString().replace('$', '').trim().replace(',', '.').replace(/[^0-9.]/g, '');
-            return parseFloat(clean) || 0;
-        }
+        data.forEach((row, index) => {
+            if ((row.Availability || '').toLowerCase().includes('agotado')) return;
+            
+            const name = row.Name ? row.Name.trim() : 'Producto';
+            let finalPrice = parsePrice(row['Price']);
+            
+            let mainImg = cleanImageUrl(row.Thumbnail) || cleanImageUrl(row.Image1) || 'https://placehold.co/400x400';
+            let gallery = [row.Thumbnail, row.Image1, row.Image2].map(img => cleanImageUrl(img)).filter(Boolean);
+            
+            // DETECCIÓN DE PROVEEDOR
+            // Buscamos en columna 'Supplier', 'Proveedor' o 'Code'. Si no, asumimos VP.
+            let rawSupplier = (row.Supplier || row.Proveedor || row.Code || "VP").toUpperCase().trim();
+            // Limpiamos si viene algo como "AS - Sankey" a solo "AS"
+            let supplierCode = "VP"; 
+            for(let key in SUPPLIER_RULES) {
+                if(rawSupplier.includes(key)) {
+                    supplierCode = key;
+                    break;
+                }
+            }
 
-        function formatPrice(num) {
-            return num.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
+            const variant = {
+                id: index,
+                price: finalPrice,
+                color: row.Color || '',
+                format: row.Formato || '',
+                stock: row.Stock || '1',
+                thumb: mainImg,
+                desc: row.Description,
+                weight: extractWeight(row.Description || ''),
+                supplier: supplierCode, // CÓDIGO NORMALIZADO
+                rawShipping: row['Shipping Cost'] || '', // Por si viene explícito en CSV
+                paymentOptions: (row.Currency || "").split(',')
+            };
 
-        function extractWeight(desc) {
-            if (!desc) return 0;
-            const match = desc.match(/Peso:?\s*([\d\.]+)\s*lb/i);
-            return match ? parseFloat(match[1]) : 0;
-        }
-
-        // --- CARGA DE DATOS ---
-        Papa.parse(PROXY_URL, {
-            download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
-                if(results.data.length === 0) { showError("No se encontraron datos."); return; }
-                parseData(results.data);
-                startSocialProof();
-            },
-            error: function(err) { showError("Error de conexión. Intenta recargar."); }
+            if(groupsMap.has(name)) {
+                groupsMap.get(name).variants.push(variant);
+            } else {
+                const cat = row.Category || 'Otros';
+                categories.add(cat);
+                groupsMap.set(name, { name, category: cat, gallery: [...new Set(gallery)], variants: [variant] });
+            }
         });
 
-        function showError(msg) {
-            document.getElementById('loading').style.display = 'none';
-            const err = document.getElementById('error-message');
-            err.innerText = msg;
-            err.classList.remove('hidden');
-        }
+        groupedProducts = Array.from(groupsMap.values());
+        renderCategories();
+        showFeaturedProducts();
+        document.getElementById('loading').style.display = 'none';
+    }
 
-        function parseData(data) {
-            const rateRow = data.find(r => r.TasaCambio && !isNaN(parseFloat(r.TasaCambio)));
-            if(rateRow) {
-                globalExchangeRate = parseFloat(rateRow.TasaCambio);
-                document.getElementById('displayRate').innerText = formatPrice(globalExchangeRate);
-            }
+    // --- RENDERIZADO (Grid, Categorías - Igual que antes) ---
+    function renderCategories() {
+        const container = document.getElementById('category-filters-hero');
+        container.innerHTML = `<button onclick="showFullCatalog('all')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white font-bold text-xs uppercase">Todo</button>`;
+        categories.forEach(cat => container.innerHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white transition font-bold text-xs uppercase">${cat}</button>`);
+    }
 
-            let groupsMap = new Map();
+    function showFeaturedProducts() {
+        renderGrid(groupedProducts.sort(() => 0.5 - Math.random()).slice(0, 12));
+        document.getElementById('view-all-container').classList.remove('hidden');
+    }
 
-            data.forEach((row, index) => {
-                const avail = (row.Availability || '').toLowerCase();
-                if (avail.includes('out') || avail.includes('agotado')) return;
-                
-                const isReservation = avail.includes('reservar');
-                const name = row.Name ? row.Name.trim() : 'Sin Nombre';
-                
-                let finalPrice = parsePrice(row['Price']);
-                let discountedPrice = parsePrice(row['Discounted Price']);
-                if(discountedPrice > 0 && discountedPrice < finalPrice) finalPrice = discountedPrice;
+    function showFullCatalog(category) {
+        const filtered = category === 'all' ? groupedProducts : groupedProducts.filter(p => p.category === category);
+        renderGrid(filtered);
+        document.getElementById('view-all-container').classList.add('hidden');
+        document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+    }
 
-                let mainImg = cleanImageUrl(row.Thumbnail) || cleanImageUrl(row.Image1) || 'https://placehold.co/400x400?text=Imagen+No+Disp';
-                let gallery = [row.Thumbnail, row.Image1, row.Image2, row.Image3].map(img => cleanImageUrl(img)).filter(u => u!=null);
-                const weight = extractWeight(row.Description || '');
-
-                // Dentro de la función parseData(data)
-// SUSTITUYE EL BLOQUE "const variant = {" POR ESTE:
-
-const variant = {
-    id: index,
-    price: finalPrice,
-    color: row.Color || '',
-    format: row.Formato || '',
-    stock: row.Stock || '0',
-    isReservation: isReservation, 
-    thumb: mainImg,
-    desc: row.Description,
-    weight: weight,
-    supplier: row.Supplier || row.Proveedor || 'General',
-    
-    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-    // Buscamos todas las formas posibles de escribir las columnas
-    shippingRaw: row['Shipping Cost'] || row['ShippingCost'] || row['Costo Envio'] || row['Envio'] || '', 
-    warrantyRaw: row['Warranty'] || row['Garantia'] || row['Garantía'] || '', 
-    // ---------------------------------
-
-    paymentOptions: (row.Currency || row.Pagos || "USD, CUP").split(',').map(s => s.trim()).filter(s => s !== "")
-};
-
-                if(groupsMap.has(name)) {
-                    groupsMap.get(name).variants.push(variant);
-                } else {
-                    const cat = row.Category ? row.Category.trim() : 'Otros';
-                    if(cat && cat !== 'Otros') categories.add(cat);
-                    groupsMap.set(name, {
-                        name: name,
-                        category: cat,
-                        gallery: [...new Set(gallery)],
-                        variants: [variant] 
-                    });
-                }
-            });
-
-            groupedProducts = Array.from(groupsMap.values());
-            categories = new Set([...categories].sort());
-            renderCategories();
-            showFeaturedProducts();
-            document.getElementById('loading').style.display = 'none';
-        }
-
-        function handleImageError(imgEl, groupName) {
-            imgEl.src = 'https://placehold.co/400x400/333/fff?text=Consultar+Imagen';
-            imgEl.onerror = null; 
-        }
-
-        // --- RENDERIZADO ---
-        function showFeaturedProducts() {
-            // "Prioridad Alta" Logic: Pick randoms to show variety
-            const featured = [...groupedProducts].sort(() => 0.5 - Math.random()).slice(0, 12);
-            renderGrid(featured);
-            document.getElementById('view-all-container').classList.remove('hidden');
-        }
-
-        function showFullCatalog(category = 'all') {
-            const filtered = category === 'all' ? groupedProducts : groupedProducts.filter(p => p.category === category);
-            renderGrid(filtered);
-            document.getElementById('view-all-container').classList.add('hidden');
-            document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
-        }
-
-        function renderCategories() {
-            const container = document.getElementById('category-filters-hero');
-            container.innerHTML = `<button onclick="showFullCatalog('all')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white font-bold text-xs uppercase tracking-wide">Todo</button>`;
-            categories.forEach(cat => container.innerHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-6 py-2 rounded-full border border-gray-600 bg-gray-800 text-gray-300 hover:border-orange-500 hover:text-white transition font-bold text-xs uppercase tracking-wide">${cat}</button>`);
-        }
-
-        function renderGrid(productsList) {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = '';
+    function renderGrid(productsList) {
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
+        productsList.forEach(group => {
+            const v = group.variants[0];
+            const card = document.createElement('div');
+            // Obtener color del proveedor para el borde
+            const sRule = SUPPLIER_RULES[v.supplier] || SUPPLIER_RULES['VP'];
             
-            // Si no hay productos (o el filtro no encontró nada)
-            if(productsList.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">Inventario agotado temporalmente.</div>';
-                return;
-            }
-
-            productsList.forEach(group => {
-                const mainVariant = group.variants[0];
-                
-                // 1. Calculamos el precio PRIMERO para saber si es Premium
-                const prices = group.variants.map(v => v.price);
-                const minPrice = Math.min(...prices);
-
-                // 2. Lógica de MARKETING (Hormozi Style)
-                // Si vale más de $100 es "Inversión", si no, usamos escasez
-                let labelHTML = '';
-                let borderClass = 'border-gray-700'; // Borde normal por defecto
-                let shadowClass = '';
-
-                if (minPrice >= 100) {
-                    // ESTILO PREMIUM / INVERSIÓN (Borde Dorado)
-                    labelHTML = `<div class="absolute top-0 right-0 bg-yellow-600 text-white text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-wider z-20 shadow-md">Inversión Segura</div>`;
-                    borderClass = 'border-yellow-500/50'; 
-                    shadowClass = 'shadow-[0_0_15px_rgba(234,179,8,0.1)]'; // Brillo dorado sutil
-                } else if (Math.random() > 0.6) {
-                    // ESTILO ESCASEZ (Etiqueta Roja)
-                    labelHTML = `<div class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow z-20 animate-pulse">¡STOCK BAJO!</div>`;
-                } else {
-                    // ESTILO RAPIDEZ (Etiqueta Azul)
-                    labelHTML = `<div class="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow z-20">ENTREGA RÁPIDA</div>`;
-                }
-
-                // 3. Crear la tarjeta
-                const card = document.createElement('div');
-                // Aquí aplicamos las clases dinámicas (borderClass y shadowClass)
-                card.className = `product-card rounded-2xl flex flex-col group cursor-pointer animate-slide-in ${borderClass} ${shadowClass} relative overflow-hidden transition-all duration-300 hover:shadow-2xl`;
-                
-                card.onclick = () => openProductModal(group.name);
-                
-                card.innerHTML = `
-                    ${labelHTML}
-                    <div class="product-image-container h-64 p-4 relative bg-gray-800/50">
-                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur text-gray-300 text-[10px] font-bold px-2 py-1 rounded border border-gray-600 z-10 uppercase">${group.category}</div>
-                        <div class="img-placeholder rounded-xl overflow-hidden h-full w-full">
-                            <img src="${mainVariant.thumb}" 
-                                 class="w-full h-full object-contain group-hover:scale-110 transition duration-500" 
-                                 alt="${group.name}" 
-                                 onerror="handleImageError(this)">
-                        </div>
+            card.className = `product-card rounded-2xl flex flex-col group cursor-pointer animate-slide-in relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-gray-700 hover:border-${sRule.color}-500`;
+            card.onclick = () => openProductModal(group.name);
+            
+            card.innerHTML = `
+                <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10">${v.supplier}</div>
+                <div class="product-image-container h-64 p-4 relative bg-gray-800/50">
+                    <img src="${v.thumb}" class="w-full h-full object-contain group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/400x400?text=Error'">
+                </div>
+                <div class="p-5 flex-1 flex flex-col border-t border-gray-700 bg-gray-900/80">
+                    <h3 class="text-white font-bold text-lg mb-1 line-clamp-2">${group.name}</h3>
+                    <div class="mt-auto pt-3 flex justify-between items-center">
+                        <span class="text-xl font-black text-white">$${formatPrice(v.price)}</span>
+                        <button class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white"><i class="fas fa-plus"></i></button>
                     </div>
-                    <div class="p-5 flex-1 flex flex-col border-t border-gray-700 bg-gray-900/80">
-                        <h3 class="text-white font-bold text-lg mb-1 leading-tight group-hover:text-orange-400 transition line-clamp-2">${group.name}</h3>
-                        <p class="text-xs text-gray-500 mb-4 line-clamp-1">Peso aprox: ${mainVariant.weight} lb</p>
-                        
-                        <div class="mt-auto pt-3 border-t border-gray-700/50 flex justify-between items-center">
-                            <div>
-                                <span class="text-[10px] text-gray-400 block uppercase font-bold">Inversión</span>
-                                <span class="text-2xl font-black text-white">$${formatPrice(minPrice)}</span>
-                            </div>
-                            <button class="w-10 h-10 rounded-full bg-orange-600 group-hover:bg-orange-500 flex items-center justify-center text-white shadow-lg transition transform group-hover:scale-110"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </div>`;
-                grid.appendChild(card);
-            });
-        }
+                </div>`;
+            grid.appendChild(card);
+        });
+    }
 
-        // --- CARRITO & MODALS ---
-        function addToCart() {
-            if(!selectedVariant || !currentGroup) return;
-            const cartItemId = `${currentGroup.name}-${selectedVariant.color}-${selectedVariant.format}`;
-            const existingItem = cart.find(item => item.cartId === cartItemId);
-
-            if(existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({
-                    cartId: cartItemId,
-                    name: currentGroup.name,
-                    variant: selectedVariant,
-                    quantity: currentModalQty
-                });
-            }
-            updateCartCount();
-            closeProductModal();
-        }
-
-        function updateCartCount() {
-            const count = cart.reduce((acc, item) => acc + item.quantity, 0);
-            const badge = document.getElementById('cartCount');
-            badge.innerText = count;
-            badge.classList.remove('hidden');
-            if(count === 0) badge.classList.add('hidden');
-        }
-
-        function openCartModal() {
-            const container = document.getElementById('cartItemsContainer');
-            container.innerHTML = '';
-            let totalUSD = 0;
-            let totalWeight = 0;
-
-            if(cart.length === 0) {
-                container.innerHTML = '<div class="text-center py-10"><i class="fas fa-shopping-basket text-4xl text-gray-600 mb-2"></i><p class="text-gray-400">Tu pedido está vacío.</p></div>';
-            } else {
-                cart.forEach((item, index) => {
-                    const itemTotal = item.variant.price * item.quantity;
-                    totalUSD += itemTotal;
-                    totalWeight += (item.variant.weight * item.quantity);
-                    
-                    let variantText = [item.variant.color, item.variant.format].filter(Boolean).join(' - ');
-
-                    container.innerHTML += `
-                        <div class="flex items-center gap-3 bg-gray-700/50 p-3 rounded-lg border border-gray-600">
-                            <img src="${item.variant.thumb}" class="w-14 h-14 object-contain bg-white rounded border border-gray-500">
-                            <div class="flex-1">
-                                <h4 class="text-white font-bold text-sm line-clamp-1">${item.name}</h4>
-                                <p class="text-orange-300 text-xs">${variantText}</p>
-                                <p class="text-gray-400 text-xs mt-1">$${formatPrice(item.variant.price)} x ${item.quantity}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-white font-bold">$${formatPrice(itemTotal)}</p>
-                                <button onclick="removeItem(${index})" class="text-red-400 text-xs hover:underline mt-1">Eliminar</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('cartTotalUSD').innerText = '$' + formatPrice(totalUSD);
-            document.getElementById('cartTotalWeight').innerText = totalWeight.toFixed(2) + ' lb';
-            document.getElementById('cartModal').classList.remove('hidden');
-        }
-
-        function removeItem(index) {
-            cart.splice(index, 1);
-            updateCartCount();
-            openCartModal();
-        }
-
-        function closeCartModal() { document.getElementById('cartModal').classList.add('hidden'); }
-
-        // --- PRODUCT DETAILS ---
-        function openProductModal(groupName) {
-            currentGroup = groupedProducts.find(g => g.name === groupName);
-            // --- AGREGAR ESTO ---
-    currentModalQty = 1;
-    if(document.getElementById('modalQtyDisplay')) {
+    // --- MODAL DETALLE CON LOGÍSTICA DINÁMICA ---
+    function openProductModal(groupName) {
+        currentGroup = groupedProducts.find(g => g.name === groupName);
+        currentModalQty = 1;
         document.getElementById('modalQtyDisplay').innerText = "1";
-    }
-            if(!currentGroup) return;
-            selectedVariant = currentGroup.variants[0];
-            
-            document.getElementById('modalTitle').innerText = currentGroup.name;
-            document.getElementById('modalCat').innerText = currentGroup.category;
-            
-            const selectorContainer = document.getElementById('variantSelectorContainer');
-            const selectEl = document.getElementById('variantSelect');
-            selectEl.innerHTML = '';
+        if(!currentGroup) return;
 
-            if (currentGroup.variants.length > 1) {
-                selectorContainer.classList.remove('hidden');
-                currentGroup.variants.forEach((v, idx) => {
-                    const opt = document.createElement('option');
-                    opt.value = idx;
-                    let text = [v.color, v.format].filter(Boolean).join(' - ');
-                    if(!text) text = `Opción ${idx + 1}`;
-                    opt.innerText = `${text} ($${formatPrice(v.price)})`;
-                    selectEl.appendChild(opt);
-                });
-            } else { selectorContainer.classList.add('hidden'); }
-
-            updateModalVariant(0); 
-            
-            // Gallery
-            const thumbContainer = document.getElementById('modalThumbnails');
-            thumbContainer.innerHTML = '';
-            if(currentGroup.gallery.length > 0) {
-                currentGroup.gallery.forEach(img => {
-                    const imgEl = document.createElement('img');
-                    imgEl.src = img;
-                    imgEl.className = "w-16 h-16 object-contain border border-gray-600 hover:border-orange-500 cursor-pointer rounded bg-white";
-                    imgEl.onclick = () => document.getElementById('modalMainImg').src = img;
-                    thumbContainer.appendChild(imgEl);
-                });
-            }
-            document.getElementById('productModal').classList.remove('hidden');
+        // Reset selector
+        const selectEl = document.getElementById('variantSelect');
+        selectEl.innerHTML = '';
+        if (currentGroup.variants.length > 1) {
+            document.getElementById('variantSelectorContainer').classList.remove('hidden');
+            currentGroup.variants.forEach((v, idx) => {
+                let text = [v.color, v.format].filter(Boolean).join(' - ') || `Opción ${idx + 1}`;
+                selectEl.innerHTML += `<option value="${idx}">${text} ($${formatPrice(v.price)})</option>`;
+            });
+        } else {
+            document.getElementById('variantSelectorContainer').classList.add('hidden');
         }
 
-       function updateModalVariant() {
-    const idx = document.getElementById('variantSelect').value || 0;
-    selectedVariant = currentGroup.variants[idx];
-    
-    // 1. Actualizar Datos Básicos
-    document.getElementById('modalMainImg').src = selectedVariant.thumb;
-    document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
-    document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
-    const pPerLb = selectedVariant.weight > 0 ? (selectedVariant.price / selectedVariant.weight) : 0;
-    document.getElementById('pricePerLb').innerText = pPerLb > 0 ? `$${formatPrice(pPerLb)}` : '---';
-    document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Descripción estándar del proveedor.';
-
-    // 2. DETECTAR PROVEEDOR (Para el color y el icono)
-    const supplierCode = (selectedVariant.supplier || "").toUpperCase();
-    
-    // Configuración Base Visual (Icono, Color, Nombre)
-    let visualInfo = { 
-        name: "ALMACÉN GENERAL", 
-        color: "gray", 
-        icon: "fa-info-circle", 
-        location: "La Habana" 
-    };
-
-    // Reglas por defecto (Solo se usan si el Excel está vacío)
-    let defaultShipping = "A coordinar";
-    let defaultWarranty = "Consultar";
-
-    if (supplierCode.includes("VP")) {
-        visualInfo = { name: "ALMACÉN VP (General)", color: "orange", icon: "fa-box", location: "Centro Habana" };
-        defaultShipping = "$1 - $5 USD (Mensajería Ligera)";
-        defaultWarranty = "30 Días (Cambio Físico)";
-    } 
-    else if (supplierCode.includes("JP")) {
-        visualInfo = { name: "ALMACÉN JP (Mobiliario)", color: "blue", icon: "fa-warehouse", location: "Fontanar" };
-        defaultShipping = "8,000 CUP (Camión Carga)";
-        defaultWarranty = "1 Año (Estructural)";
-    } 
-    else if (supplierCode.includes("AA")) {
-        visualInfo = { name: "ALMACÉN AA (Tecnología)", color: "purple", icon: "fa-microchip", location: "Vedado" };
-        defaultShipping = "Gratis (Habana) / $5 USD (Periferia)";
-        defaultWarranty = "3 Meses Garantía Técnica";
-    }
-
-    // 3. LA LÓGICA DE ORO: EL EXCEL MANDA
-    // Si selectedVariant.warrantyRaw tiene texto, ÚSALO. Si no, usa el default.
-    const finalWarranty = selectedVariant.warrantyRaw && selectedVariant.warrantyRaw.trim() !== "" 
-                          ? selectedVariant.warrantyRaw 
-                          : defaultWarranty;
-
-    const finalShipping = selectedVariant.shippingRaw && selectedVariant.shippingRaw.trim() !== "" 
-                          ? selectedVariant.shippingRaw 
-                          : defaultShipping;
-
-    // 4. GENERAR EL HTML
-    const logHTML = `
-        <div class="p-3 bg-${visualInfo.color}-900/20 border border-${visualInfo.color}-500/50 rounded-lg text-xs">
-            <div class="flex justify-between items-center mb-2 border-b border-${visualInfo.color}-500/30 pb-1">
-                <span class="font-bold text-${visualInfo.color}-400 uppercase">
-                    <i class="fas ${visualInfo.icon} mr-1"></i> ${visualInfo.name}
-                </span>
-                <span class="text-[10px] text-gray-400 bg-black/30 px-2 py-0.5 rounded">${visualInfo.location}</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold">Garantía</p>
-                    <p class="text-white font-bold leading-tight">${finalWarranty}</p>
-                </div>
-                <div>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold">Costo Envío</p>
-                    <p class="text-white font-bold leading-tight">${finalShipping}</p>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // 5. INYECTAR EN EL HTML
-    const container = document.getElementById('dynamicLogisticsContainer');
-    if(container) {
-        container.innerHTML = logHTML;
-        container.classList.remove('hidden');
-    }
-
-    // 6. Actualizar etiqueta de disponibilidad
-    const availDiv = document.getElementById('modalAvailability');
-    if(selectedVariant.isReservation) {
-        availDiv.innerHTML = '<span class="bg-yellow-600 text-black text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-clock"></i> Reserva</span>';
-    } else {
-        availDiv.innerHTML = '<span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded uppercase"><i class="fas fa-check"></i> Disponible</span>';
-    }
-}
-
-        function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
-
-        // --- CHECKOUT LOGIC ---
-        function openOrderForm() {
-    if(cart.length === 0) return;
-    closeCartModal();
-    
-    // 1. Detectar Proveedores
-    let hasVP = cart.some(item => (item.variant.supplier || "").toUpperCase().includes("VP"));
-    let hasJP = cart.some(item => (item.variant.supplier || "").toUpperCase().includes("JP"));
-    let hasAA = cart.some(item => (item.variant.supplier || "").toUpperCase().includes("AA"));
-    
-    // Si no tiene ninguno explícito, asumimos VP (General)
-    if (!hasVP && !hasJP && !hasAA) hasVP = true; 
-
-    let groupCount = (hasVP ? 1 : 0) + (hasJP ? 1 : 0) + (hasAA ? 1 : 0);
-    const alertBox = document.getElementById('mixedCartAlert');
-    if (groupCount > 1) alertBox.classList.remove('hidden');
-    else alertBox.classList.add('hidden');
-
-    // 3. Generar Controles
-    const payContainer = document.getElementById('dynamicPaymentContainer');
-    payContainer.innerHTML = ''; 
-
-    let allOptions = new Set();
-    cart.forEach(item => item.variant.paymentOptions.forEach(opt => allOptions.add(opt)));
-    if(allOptions.size === 0) allOptions.add("USD").add("CUP").add("Zelle");
-
-    const createConfigBlock = (prefix, label, restrictCUP, colorClass) => {
-        let payOptions = '';
-        allOptions.forEach(opt => {
-            if (restrictCUP && opt.toUpperCase().includes("CUP")) return;
-            payOptions += `<option value="${opt}">${opt}</option>`;
+        document.getElementById('variantSelect').value = 0;
+        document.getElementById('modalTitle').innerText = currentGroup.name;
+        document.getElementById('modalCat').innerText = currentGroup.category;
+        
+        // Gallery logic (simplificada)
+        const thumbContainer = document.getElementById('modalThumbnails');
+        thumbContainer.innerHTML = '';
+        currentGroup.gallery.forEach(img => {
+            thumbContainer.innerHTML += `<img src="${img}" onclick="document.getElementById('modalMainImg').src='${img}'" class="w-16 h-16 object-contain border border-gray-600 rounded cursor-pointer">`;
         });
-        if (restrictCUP && !payOptions.includes("EUR")) payOptions += `<option value="EUR">EUR (Efectivo)</option>`;
 
-        return `
-            <div class="bg-gray-800 p-3 rounded-lg border-l-4 ${colorClass} border-gray-600 mb-3">
-                <p class="text-white text-xs font-bold uppercase mb-2 border-b border-gray-700 pb-1">${label}</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-gray-500 text-[10px] font-bold mb-1">MÉTODO PAGO</label>
-                        <select id="payMethod${prefix}" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white text-xs outline-none" onchange="calculateCartTotal()">
-                            ${payOptions}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-500 text-[10px] font-bold mb-1">ENTREGA</label>
-                        <select id="deliveryMethod${prefix}" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white text-xs outline-none" onchange="calculateCartTotal()">
-                            <option value="pickup">Recoger en Sede</option>
-                            <option value="delivery">Mensajería</option>
-                        </select>
-                    </div>
+        updateModalVariant();
+        document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function updateModalVariant() {
+        const idx = document.getElementById('variantSelect').value || 0;
+        selectedVariant = currentGroup.variants[idx];
+        const sRule = SUPPLIER_RULES[selectedVariant.supplier] || SUPPLIER_RULES["VP"];
+
+        document.getElementById('modalMainImg').src = selectedVariant.thumb;
+        document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
+        document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
+        document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Sin descripción.';
+
+        // INYECCIÓN DE DATOS DE PROVEEDOR
+        const container = document.getElementById('dynamicLogisticsContainer');
+        container.innerHTML = `
+            <div class="p-3 bg-${sRule.color}-900/20 border border-${sRule.color}-500/50 rounded-lg text-xs animate-fade-in">
+                <div class="flex justify-between items-center mb-2 border-b border-${sRule.color}-500/30 pb-1">
+                    <span class="font-bold text-${sRule.color}-400 uppercase">
+                        <i class="fas ${sRule.icon} mr-1"></i> ${sRule.name}
+                    </span>
+                    <span class="text-[9px] text-gray-400 bg-black/30 px-2 rounded">Cód: ${selectedVariant.supplier}</span>
+                </div>
+                <div class="mb-2">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Monedas Aceptadas:</p>
+                    <p class="text-white font-medium">${sRule.currencyInfo}</p>
+                </div>
+                <div>
+                     <p class="text-[10px] text-gray-500 uppercase font-bold">Condición Envío:</p>
+                     <p class="text-white font-medium">${getShippingText(sRule)}</p>
                 </div>
             </div>
         `;
-    };
-
-    if (hasVP) payContainer.innerHTML += createConfigBlock('VP', 'GRUPO #1 (Productos Varios)', false, 'border-orange-500');
-    if (hasJP) payContainer.innerHTML += createConfigBlock('JP', 'GRUPO #2 (Mobiliario/Equipos)', true, 'border-blue-500');
-    if (hasAA) payContainer.innerHTML += createConfigBlock('AA', 'GRUPO #3 (Tecnología AA)', false, 'border-purple-500');
-
-    calculateCartTotal(); 
-    document.getElementById('orderModal').classList.remove('hidden');
-}
-
-        function closeOrderForm() { document.getElementById('orderModal').classList.add('hidden'); }
-
-        function toggleDeliveryFields() {
-            const isDelivery = document.querySelector('input[name="deliveryType"]:checked').value === 'delivery';
-            const fields = document.getElementById('deliveryFields');
-            const muniContainer = document.getElementById('muniSelectorContainer');
-            
-            if (isDelivery) {
-                fields.classList.remove('hidden');
-                muniContainer.classList.remove('hidden');
-                document.getElementById('custMuni').required = true;
-            } else {
-                fields.classList.add('hidden');
-                document.getElementById('custMuni').required = false;
-            }
-            calculateCartTotal();
-        }
-
-        function calculateCartTotal() {
-    // 1. Detectar Métodos
-    const elDelVP = document.getElementById('deliveryMethodVP');
-    const elDelJP = document.getElementById('deliveryMethodJP');
-    const elDelAA = document.getElementById('deliveryMethodAA');
-    
-    const isDeliveryVP = elDelVP ? elDelVP.value === 'delivery' : false;
-    const isDeliveryJP = elDelJP ? elDelJP.value === 'delivery' : false;
-    const isDeliveryAA = elDelAA ? elDelAA.value === 'delivery' : false;
-    
-    // 2. Control de Dirección y Municipio
-    const fields = document.getElementById('deliveryFields');
-    const muniSelect = document.getElementById('custMuni');
-    
-    // Si alguno pide delivery, mostramos campos
-    if (isDeliveryVP || isDeliveryJP || isDeliveryAA) {
-        fields.classList.remove('hidden');
-        muniSelect.required = true;
-    } else {
-        fields.classList.add('hidden');
-        muniSelect.required = false;
+        container.classList.remove('hidden');
     }
 
-    const muni = muniSelect.value; // Ej: "Playa", "Habana del Este", etc.
+    function getShippingText(rule) {
+        if(rule.shippingRule === 'fixed_item') return "Tarifa fija por producto ($4 - $15)";
+        if(rule.shippingRule === 'zone_aa') return "Habana: Gratis / Periferia: $5 USD";
+        if(rule.shippingRule === 'flat_4') return "$4.00 USD Fijo";
+        if(rule.shippingRule === 'free_except_far') return "Gratis (Excepto Cotorro/Habana Este)";
+        if(rule.shippingRule === 'weight_vp') return "Por Peso ($1 - $10 USD)";
+        if(rule.shippingRule === 'zone_jp') return "Camión: 8000 - 10000 CUP";
+        return "A consultar";
+    }
 
-    // 3. Definición de Zonas de "Periferia" para Proveedor AA
-    // Mapeamos los municipios que contienen las zonas que mencionaste:
-    // Guanabo (H. Este), Santiago (Boyeros), Santa Fe (Playa), Cotorro, Guanabacoa.
-    const peripheryMunis = ["Habana del Este", "Boyeros", "Playa", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo"];
+    function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
 
-    // 4. Separar Carrito y Calcular Peso VP
-    let itemsVP = [], itemsJP = [], itemsAA = [];
-    let weightVP = 0;
-
-    cart.forEach(item => {
-        const supplier = (item.variant.supplier || "").toUpperCase();
-        if (supplier.includes("JP")) itemsJP.push(item);
-        else if (supplier.includes("AA")) itemsAA.push(item);
-        else {
-            itemsVP.push(item);
-            weightVP += ((item.variant.weight || 0) * item.quantity);
-        }
-    });
-
-    // Contadores para el diseño visual
-    let totalPackages = (itemsVP.length > 0 ? 1 : 0) + (itemsJP.length > 0 ? 1 : 0) + (itemsAA.length > 0 ? 1 : 0);
-    let currentPackage = 1;
-
-    const receiptContainer = document.getElementById('liveReceipt');
-    receiptContainer.innerHTML = ''; 
-
-    // --- CÁLCULO PROVEEDOR VP (Regla de Peso) ---
-    if (itemsVP.length > 0) {
-        const payMethod = document.getElementById('payMethodVP').value;
-        let subtotal = itemsVP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingCost = 0;
-        let statusLine = "📍 Recogida: Centro Habana";
-
-        if (isDeliveryVP) {
-            // REGLA VP APLICADA:
-            // 0.1 a 50lb -> $1 | 50.1 a 180lb -> $3 | >180.1 -> $10
-            if (weightVP <= 50) shippingCost = 1;
-            else if (weightVP <= 180) shippingCost = 3;
-            else shippingCost = 10;
-            
-            statusLine = `🚚 Envío (${weightVP.toFixed(1)} lb): $${shippingCost} USD`;
-        }
-
-        let total = subtotal + shippingCost;
-        let finalStr = `$${formatPrice(total)} USD`;
+    // --- CARRITO (Lógica estándar) ---
+    function addToCart() {
+        if(!selectedVariant) return;
+        const id = `${currentGroup.name}-${selectedVariant.id}`;
+        const existing = cart.find(i => i.cartId === id);
+        if(existing) existing.quantity += currentModalQty;
+        else cart.push({ cartId: id, name: currentGroup.name, variant: selectedVariant, quantity: currentModalQty });
         
-        // Ajuste si paga en CUP
-        if (payMethod.includes("CUP")) {
-            const match = payMethod.match(/\+(\d+)/);
-            let rate = globalExchangeRate + (match ? parseFloat(match[1]) : 0);
-            finalStr = `${formatPrice(total * rate)} CUP`;
-        }
-
-        receiptContainer.innerHTML += generateShipmentCard(
-            currentPackage, totalPackages, "ALMACÉN GENERAL (VP)", "orange", "fa-box-open",
-            itemsVP, statusLine, finalStr, payMethod
-        );
-        currentPackage++;
+        updateCartCount();
+        closeProductModal();
     }
 
-    // --- CÁLCULO PROVEEDOR JP (Regla Habana del Este) ---
-    if (itemsJP.length > 0) {
-        const payMethod = document.getElementById('payMethodJP').value;
-        let subtotal = itemsJP.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingInfo = "📍 Recogida: Fontanar";
+    function updateCartCount() {
+        const count = cart.reduce((a, b) => a + b.quantity, 0);
+        const badge = document.getElementById('cartCount');
+        badge.innerText = count;
+        badge.classList.toggle('hidden', count === 0);
+    }
+
+    function removeItem(idx) { cart.splice(idx, 1); updateCartCount(); openCartModal(); }
+    
+    // --- MODAL CARRITO (Visualización simple) ---
+    function openCartModal() {
+        const container = document.getElementById('cartItemsContainer');
+        container.innerHTML = '';
+        let total = 0;
+        cart.forEach((item, idx) => {
+            total += item.variant.price * item.quantity;
+            container.innerHTML += `
+                <div class="flex items-center gap-3 bg-gray-700/50 p-3 rounded mb-2">
+                    <img src="${item.variant.thumb}" class="w-10 h-10 object-contain bg-white rounded">
+                    <div class="flex-1">
+                        <div class="flex justify-between"><span class="text-white text-xs font-bold">${item.name}</span><span class="text-white text-xs font-bold">$${item.quantity * item.variant.price}</span></div>
+                        <div class="flex justify-between text-[10px] text-gray-400"><span>Cant: ${item.quantity}</span><button onclick="removeItem(${idx})" class="text-red-400">Eliminar</button></div>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('cartTotalUSD').innerText = '$' + formatPrice(total);
+        document.getElementById('cartModal').classList.remove('hidden');
+    }
+    function closeCartModal() { document.getElementById('cartModal').classList.add('hidden'); }
+
+    // --- CHECKOUT MULTI-PROVEEDOR (EL NÚCLEO DE LA SOLUCIÓN) ---
+    
+    function openOrderForm() {
+        if(cart.length === 0) return;
+        closeCartModal();
+
+        // 1. Identificar Proveedores en el carrito
+        const suppliersInCart = [...new Set(cart.map(i => i.variant.supplier))];
         
-        if (isDeliveryJP) {
-            // REGLA JP APLICADA:
-            // Habana del Este = 10,000 CUP, Resto = 8,000 CUP
-            let flete = (muni === "Habana del Este") ? 10000 : 8000;
-            shippingInfo = `🚚 Flete Camión: ${flete.toLocaleString()} CUP`;
-        }
-
-        let finalStr = `$${formatPrice(subtotal)} USD`;
-        if (payMethod.includes("EUR")) finalStr = `€${formatPrice(subtotal)} EUR`;
-
-        receiptContainer.innerHTML += generateShipmentCard(
-            currentPackage, totalPackages, "ALMACÉN MOBILIARIO (JP)", "blue", "fa-chair",
-            itemsJP, shippingInfo, finalStr, payMethod
-        );
-        currentPackage++;
-    }
-
-    // --- CÁLCULO PROVEEDOR AA (Regla Periferia) ---
-    if (itemsAA.length > 0) {
-        const payMethod = document.getElementById('payMethodAA').value;
-        let subtotal = itemsAA.reduce((acc, i) => acc + (i.variant.price * i.quantity), 0);
-        let shippingInfo = "📍 Recogida: Vedado";
-        let deliveryCostAA = 0;
-
-        if (isDeliveryAA) {
-            // REGLA AA APLICADA:
-            // Si el municipio está en la lista de periferia -> $5, si no -> Gratis
-            if (peripheryMunis.includes(muni)) {
-                deliveryCostAA = 5;
-                shippingInfo = `🚚 Envío Periferia: $5 USD`;
+        // 2. Generar UI Dinámica de Pagos
+        const payContainer = document.getElementById('dynamicPaymentContainer');
+        payContainer.innerHTML = '';
+        
+        suppliersInCart.forEach(code => {
+            const rule = SUPPLIER_RULES[code] || SUPPLIER_RULES["VP"];
+            
+            // Generar opciones de pago según regla
+            let optionsHTML = `<option value="USD">USD (Efectivo)</option>`;
+            
+            // Lógica de monedas basada en la tabla
+            if(rule.name.includes("Sankey") || rule.name.includes("ACA")) {
+                optionsHTML += `<option value="CUP">CUP (Tasa +10)</option><option value="Zelle">Zelle/Bizum</option>`;
+            } else if (rule.name.includes("Tec (AA)")) {
+                optionsHTML += `<option value="EUR">Euros (x1.05)</option><option value="CUP_AA">CUP (Fijo 470)</option>`;
             } else {
-                deliveryCostAA = 0;
-                shippingInfo = `🚚 Envío Habana: GRATIS`;
+                // Genericos
+                optionsHTML += `<option value="EUR">Euros (1x1)</option>`;
+                if(rule.cupMode !== 'none') optionsHTML += `<option value="CUP">CUP (Tasa +10)</option>`;
+                if(rule.currencyInfo.toLowerCase().includes('zelle')) optionsHTML += `<option value="Zelle">Zelle</option>`;
             }
-        }
 
-        // Sumamos el envío al total mostrado para que el cliente sepa cuánto preparar
-        let total = subtotal + deliveryCostAA;
-        let finalStr = `$${formatPrice(total)} USD`;
+            payContainer.innerHTML += `
+                <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-${rule.color}-500 mb-3 animate-fade-in">
+                    <p class="text-white text-xs font-bold uppercase mb-2 border-b border-gray-700 pb-1 flex justify-between">
+                        <span><i class="fas ${rule.icon} mr-1"></i> ${rule.name}</span>
+                    </p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-500 text-[10px] font-bold mb-1">MÉTODO PAGO</label>
+                            <select id="payMethod_${code}" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white text-xs outline-none" onchange="calculateCartTotal()">
+                                ${optionsHTML}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-[10px] font-bold mb-1">ENTREGA</label>
+                            <select id="deliveryMethod_${code}" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white text-xs outline-none" onchange="calculateCartTotal()">
+                                <option value="delivery">Mensajería / Flete</option>
+                                <option value="pickup">Recoger en Almacén</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
 
-        receiptContainer.innerHTML += generateShipmentCard(
-            currentPackage, totalPackages, "ALMACÉN TECNOLOGÍA (AA)", "purple", "fa-microchip",
-            itemsAA, shippingInfo, finalStr, payMethod
-        );
-        currentPackage++;
+        calculateCartTotal();
+        document.getElementById('orderModal').classList.remove('hidden');
     }
-}
 
-// Nueva función auxiliar para diseñar las tarjetas bonitas
-function generateShipmentCard(index, total, title, color, icon, items, shippingText, totalStr, payMethod) {
-    return `
-    <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-4 relative shadow-lg">
-        <!-- Cabecera del Paquete -->
-        <div class="bg-gray-900/80 p-3 border-b border-gray-700 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="bg-${color}-500/20 text-${color}-400 w-8 h-8 rounded-full flex items-center justify-center border border-${color}-500/30">
-                    <i class="fas ${icon} text-xs"></i>
+    function calculateCartTotal() {
+        const muni = document.getElementById('custMuni').value; // Ej: "Playa", "Cotorro"
+        const isPeriphery = ["Habana del Este", "Boyeros", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo", "San Miguel"].includes(muni);
+        const isFarPeriphery = ["Cotorro", "Habana del Este"].includes(muni); // Para ATCPB
+
+        const receiptContainer = document.getElementById('liveReceipt');
+        receiptContainer.innerHTML = '';
+
+        const suppliersInCart = [...new Set(cart.map(i => i.variant.supplier))];
+
+        suppliersInCart.forEach(code => {
+            const rule = SUPPLIER_RULES[code] || SUPPLIER_RULES["VP"];
+            const items = cart.filter(i => i.variant.supplier === code);
+            const method = document.getElementById(`payMethod_${code}`).value;
+            const deliveryType = document.getElementById(`deliveryMethod_${code}`).value;
+            
+            let subtotalUSD = items.reduce((sum, i) => sum + (i.variant.price * i.quantity), 0);
+            let shippingCostUSD = 0;
+            let shippingText = "Recogida";
+            let subtotalCUP_JP = 0; // Caso especial JP
+
+            // --- LÓGICA DE ENVÍO POR PROVEEDOR ---
+            if (deliveryType === 'delivery') {
+                if (rule.shippingRule === 'fixed_item') {
+                    // AS y ACA: Depende del item. Heurística simple por nombre o default
+                    items.forEach(i => {
+                        let name = i.name.toLowerCase();
+                        let itemShip = rule.defaultShipping;
+                        // Reglas aproximadas según tu tabla
+                        if(name.includes('refrigerador') || name.includes('nevera 12') || name.includes('nevera 8') || name.includes('exhibidora')) itemShip = (name.includes('20 pies')) ? 15 : 10; 
+                        else if(name.includes('nevera') || name.includes('lavadora') || name.includes('tv 60') || name.includes('tv 50')) itemShip = 5;
+                        
+                        shippingCostUSD += (itemShip * i.quantity);
+                    });
+                    shippingText = `Mensajería ($${shippingCostUSD})`;
+                }
+                else if (rule.shippingRule === 'zone_aa') {
+                    // AA: Gratis Habana, 5 Periferia
+                    shippingCostUSD = isPeriphery ? 5 : 0;
+                    shippingText = isPeriphery ? "Envío Periferia ($5)" : "Envío Habana (Gratis)";
+                }
+                else if (rule.shippingRule === 'flat_4') {
+                    // ATHV, AQ: Siempre 4
+                    shippingCostUSD = 4;
+                    shippingText = "Mensajería Fija ($4)";
+                }
+                else if (rule.shippingRule === 'free_except_far') {
+                    // ATCPB
+                    if (isFarPeriphery) { shippingCostUSD = 10; shippingText = "Envío Especial ($10)"; } // Asumo 10 por lejanía, o a negociar
+                    else { shippingCostUSD = 0; shippingText = "Envío Gratis"; }
+                }
+                else if (rule.shippingRule === 'weight_vp') {
+                    // VP: Por peso
+                    let totalWeight = items.reduce((w, i) => w + (i.variant.weight * i.quantity), 0);
+                    if (totalWeight <= 50) shippingCostUSD = 1;
+                    else if (totalWeight <= 180) shippingCostUSD = 3;
+                    else shippingCostUSD = 10;
+                    shippingText = `Envío Peso ($${shippingCostUSD})`;
+                }
+                else if (rule.shippingRule === 'zone_jp') {
+                    // JP: Se cobra en CUP directo al camionero
+                    let costCUP = (muni === "Habana del Este") ? 10000 : 8000;
+                    shippingText = `Flete Camión: ${costCUP} CUP (Pago al recibir)`;
+                }
+            }
+
+            // --- CÁLCULO FINAL SEGÚN MONEDA ---
+            let finalDisplay = "";
+            let totalUSD = subtotalUSD + shippingCostUSD;
+
+            if (method === "USD" || method === "USDT" || method.includes("Zelle") || method.includes("Tropipay")) {
+                finalDisplay = `$${formatPrice(totalUSD)} USD`;
+            } 
+            else if (method === "EUR") {
+                // 1x1 en casi todos, menos AA que es 1.05
+                if (code === "AA") {
+                    let eurNeeded = totalUSD / 1.05;
+                    finalDisplay = `€${formatPrice(eurNeeded)} EUR`;
+                } else {
+                    finalDisplay = `€${formatPrice(totalUSD)} EUR`;
+                }
+            }
+            else if (method.includes("CUP")) {
+                if (code === "AA") {
+                    // AA Tasa fija 470
+                    finalDisplay = `${formatPrice(totalUSD * 470)} CUP`;
+                } else {
+                    // Global + 10
+                    let rate = globalExchangeRate + 10;
+                    finalDisplay = `${formatPrice(totalUSD * rate)} CUP`;
+                }
+            }
+
+            // Renderizar Tarjeta
+            receiptContainer.innerHTML += `
+                <div class="bg-gray-800 rounded-lg p-3 border border-gray-700 mb-2 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-${rule.color}-500"></div>
+                    <div class="pl-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-${rule.color}-400 font-bold text-xs uppercase">${rule.name}</span>
+                            <span class="text-[10px] text-gray-400 bg-gray-900 px-2 rounded border border-gray-600">${method}</span>
+                        </div>
+                        <ul class="text-[10px] text-gray-300 mb-2 border-b border-gray-700 pb-1">
+                            ${items.map(i => `<li>${i.quantity}x ${i.name}</li>`).join('')}
+                        </ul>
+                        <div class="flex justify-between items-end">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400">Sub: $${subtotalUSD} | Env: ${deliveryType==='pickup'?'$0': (code==='JP' ? 'CUP' : '$'+shippingCostUSD)}</span>
+                                <span class="text-xs text-white italic">${shippingText}</span>
+                            </div>
+                            <span class="text-white font-black text-lg">${finalDisplay}</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">ENVÍO ${index} DE ${total}</p>
-                    <p class="text-white font-bold text-xs">${title}</p>
-                </div>
-            </div>
-        </div>
+            `;
+        });
+        
+        // Mostrar campos de dirección si algun delivery está activo
+        const anyDelivery = document.querySelector('select[value="delivery"]'); // Simplificación visual
+        const inputs = document.getElementById('deliveryFields');
+        // Chequeo real iterando los selects
+        let showAddr = false;
+        suppliersInCart.forEach(c => {
+            if(document.getElementById(`deliveryMethod_${c}`).value === 'delivery') showAddr = true;
+        });
+        
+        if(showAddr) {
+            inputs.classList.remove('hidden');
+            document.getElementById('custMuni').required = true;
+        } else {
+            inputs.classList.add('hidden');
+            document.getElementById('custMuni').required = false;
+        }
+    }
 
-        <!-- Lista de Items -->
-        <div class="p-4 space-y-3">
-            <ul class="text-xs text-gray-300 space-y-2">
-                ${items.map(i => `
-                    <li class="flex justify-between items-start border-b border-gray-700/50 pb-2 last:border-0">
-                        <span class="text-gray-200"><span class="font-bold text-white">${i.quantity}x</span> ${i.name}</span>
-                        <span class="text-gray-500 text-[10px]">${i.variant.color || ''}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>
-
-        <!-- Footer: Pago y Entrega -->
-        <div class="bg-${color}-900/10 p-3 border-t border-${color}-500/20 flex flex-col gap-2">
-            <div class="flex justify-between items-center text-xs">
-                <span class="text-gray-400">${shippingText}</span>
-                <span class="text-gray-400 italic">${payMethod}</span>
-            </div>
-            <div class="flex justify-between items-center pt-1 mt-1 border-t border-dashed border-gray-700">
-                <span class="text-gray-300 font-bold text-xs">TOTAL A PAGAR:</span>
-                <span class="text-${color}-400 font-black text-lg">${totalStr}</span>
-            </div>
-        </div>
-    </div>`;
-}
-
-// Función auxiliar para dibujar el recibo (para no repetir código HTML)
-function generateReceiptBlock(code, color, items, subtotal, shippingHtml, totalStr, method) {
-    return `
-        <div class="bg-gray-800 rounded-lg p-3 border-l-4 border-${color}-500 mb-2">
-            <div class="flex justify-between border-b border-gray-700 pb-1 mb-2">
-                <span class="font-bold text-${color}-400 text-xs">GRUPO ${code}</span>
-                <span class="text-[10px] text-gray-400">${method}</span>
-            </div>
-            <ul class="text-[10px] text-gray-300 space-y-1 mb-2">
-                ${items.map(i => `<li>• ${i.quantity}x ${i.name}</li>`).join('')}
-            </ul>
-            <div class="flex justify-between text-xs text-gray-400">
-                <span>Subtotal:</span><span>$${formatPrice(subtotal)}</span>
-            </div>
-            <div class="text-right">${shippingHtml}</div>
-            <div class="flex justify-between font-bold text-white text-sm bg-gray-900 p-2 rounded mt-2">
-                <span>TOTAL:</span><span>${totalStr}</span>
-            </div>
-        </div>`;
-}
+    function closeOrderForm() { document.getElementById('orderModal').classList.add('hidden'); }
 
     function submitOrder(e) {
-    e.preventDefault();
-    const name = document.getElementById('custName').value;
-    const ci = document.getElementById('custCI').value;
-    const muniSelect = document.getElementById('custMuni');
-    const muni = muniSelect.options[muniSelect.selectedIndex].text;
-    const isMuniPeriphery = ["Habana del Este", "Boyeros", "Playa", "Guanabacoa", "Cotorro", "La Lisa", "Arroyo Naranjo"].includes(muniSelect.value);
+        e.preventDefault();
+        const name = document.getElementById('custName').value;
+        const ci = document.getElementById('custCI').value;
+        const muni = document.getElementById('custMuni').value;
+        const address = document.getElementById('custAddress').value;
+        
+        let msg = `👋 *NUEVO PEDIDO MULTISTORE*\n`;
+        msg += `👤 Cliente: *${name}*\n🆔 CI: ${ci}\n`;
+        if(!document.getElementById('deliveryFields').classList.contains('hidden')) {
+            msg += `📍 Destino: ${muni}\n🏠 Dir: ${address}\n`;
+        }
+        msg += `================================\n`;
+
+        const suppliersInCart = [...new Set(cart.map(i => i.variant.supplier))];
+        suppliersInCart.forEach(code => {
+            const rule = SUPPLIER_RULES[code];
+            const items = cart.filter(i => i.variant.supplier === code);
+            const method = document.getElementById(`payMethod_${code}`).value;
+            const del = document.getElementById(`deliveryMethod_${code}`).value;
+
+            msg += `📦 *PAQUETE: ${rule.name}*\n`;
+            items.forEach(i => msg += `   ▪ ${i.quantity}x ${i.name}\n`);
+            msg += `   💳 Pago: ${method}\n`;
+            msg += `   🚚 Entrega: ${del === 'delivery' ? 'A Domicilio' : 'Recogida Sede'}\n`;
+            msg += `--------------------------------\n`;
+        });
+
+        window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
+        cart = [];
+        updateCartCount();
+        closeOrderForm();
+    }
     
-    // Recopilar items
-    let itemsVP = [], itemsJP = [], itemsAA = [];
-    let weightVP = 0;
-    cart.forEach(item => {
-        const supplier = (item.variant.supplier || "").toUpperCase();
-        if (supplier.includes("JP")) itemsJP.push(item);
-        else if (supplier.includes("AA")) itemsAA.push(item);
-        else {
-            itemsVP.push(item);
-            weightVP += ((item.variant.weight || 0) * item.quantity);
-        }
-    });
-
-    let msg = `👋 *NUEVO PEDIDO MULTISTORE* \n`;
-    msg += `👤 Cliente: *${name}* \n🆔 CI: ${ci}\n`;
-    
-    // Añadimos la dirección al principio si aplica
-    const needsDelivery = document.querySelector('select[id^="deliveryMethod"][value="delivery"]') !== null;
-    if (needsDelivery) {
-        msg += `📍 Municipio: *${muni}*\n`;
-        msg += `🏠 Dirección: ${document.getElementById('custAddress').value}\n`;
+    function filterProducts() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        if(!q) { renderGrid(groupedProducts); return; }
+        const f = groupedProducts.filter(g => g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q));
+        renderGrid(f);
     }
-    msg += `--------------------------------\n`;
-
-    // --- BLOQUE VP ---
-    if (itemsVP.length > 0) {
-        const isDel = document.getElementById('deliveryMethodVP').value === 'delivery';
-        msg += `📦 *ORDEN #1 (General - VP)*\n`;
-        itemsVP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
-        
-        if(isDel) {
-            let cost = (weightVP <= 50) ? 1 : (weightVP <= 180 ? 3 : 10);
-            msg += `   🚚 Envío: DOMICILIO ($${cost} USD)\n`;
-        } else {
-            msg += `   📍 Entrega: RECOGIDA (Centro Habana)\n`;
-        }
-        msg += `   💳 Método: ${document.getElementById('payMethodVP').value}\n`;
-        msg += `--------------------------------\n`;
-    }
-
-    // --- BLOQUE JP ---
-    if (itemsJP.length > 0) {
-        const isDel = document.getElementById('deliveryMethodJP').value === 'delivery';
-        msg += `🪑 *ORDEN #2 (Mobiliario - JP)*\n`;
-        itemsJP.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
-        
-        if(isDel) {
-            let cost = (muniSelect.value === "Habana del Este") ? "10,000" : "8,000";
-            msg += `   🚚 Flete: CAMIÓN (${cost} CUP)\n`;
-        } else {
-            msg += `   📍 Entrega: RECOGIDA (Fontanar)\n`;
-        }
-        msg += `   💳 Método: ${document.getElementById('payMethodJP').value}\n`;
-        msg += `--------------------------------\n`;
-    }
-
-    // --- BLOQUE AA ---
-    if (itemsAA.length > 0) {
-        const isDel = document.getElementById('deliveryMethodAA').value === 'delivery';
-        msg += `💻 *ORDEN #3 (Tecnología - AA)*\n`;
-        itemsAA.forEach(i => msg += `   ▫ ${i.quantity}x ${i.name}\n`);
-        
-        if(isDel) {
-            let cost = isMuniPeriphery ? "$5 USD" : "GRATIS";
-            msg += `   🚚 Envío: MENSAJERÍA (${cost})\n`;
-        } else {
-            msg += `   📍 Entrega: RECOGIDA (Vedado)\n`;
-        }
-        msg += `   💳 Método: ${document.getElementById('payMethodAA').value}\n`;
-        msg += `--------------------------------\n`;
-    }
-
-    window.open(`https://wa.me/5358183649?text=${encodeURIComponent(msg)}`, '_blank');
-    closeOrderForm();
-    cart = []; 
-    updateCartCount();
-}
-
-        // FUNCIONALIDAD DE BÚSQUEDA INSTANTÁNEA
-        function filterProducts() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const grid = document.getElementById('product-grid');
-            
-            if (!query) {
-                // Si está vacío, mostramos "destacados" o "todo" según prefieras
-                // Por defecto volvemos a mostrar todo lo cargado actualmente
-                renderGrid(groupedProducts); 
-                return;
-            }
-
-            const filtered = groupedProducts.filter(group => {
-                const nameMatch = group.name.toLowerCase().includes(query);
-                const catMatch = group.category.toLowerCase().includes(query);
-                // También buscamos en la descripción de la variante
-                const descMatch = group.variants.some(v => (v.desc || '').toLowerCase().includes(query));
-                return nameMatch || catMatch || descMatch;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fas fa-search-minus text-4xl text-gray-600 mb-4"></i>
-                        <p class="text-gray-400">No encontramos nada con "${query}".</p>
-                        <button onclick="document.getElementById('searchInput').value=''; filterProducts()" class="mt-2 text-orange-500 underline">Ver todo el inventario</button>
-                    </div>`;
-            } else {
-                renderGrid(filtered);
-            }
-        }
-        
-        // Funciones del Modal de Testimonios
-function openProofModal(imgSrc) {
-    const modal = document.getElementById('proofModal');
-    const img = document.getElementById('proofModalImg');
-    if(modal && img) {
-        img.src = imgSrc;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-}
-
-function closeProofModal() {
-    const modal = document.getElementById('proofModal');
-    if(modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-}
-
-    
-    </script>
+</script>
 
     <!-- 4. SOCIAL PROOF: WALL OF TRUTH (Integración Real) -->
     <section class="py-16 bg-[#020617] relative overflow-hidden border-t border-gray-800">
