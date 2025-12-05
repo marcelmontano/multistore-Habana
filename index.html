@@ -164,16 +164,20 @@
                 <span class="text-gray-300 block mt-2 font-medium">La mejor "cuenta de ahorro" en La Habana es tu casa equipada.</span>
             </p>
 
-            <!-- BUSCADOR (Se mantiene igual, funciona bien) -->
+            <!-- BUSCADOR CON GENERADOR DE ENLACE -->
             <div class="max-w-xl mx-auto mb-8 relative group z-30">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition"></i>
                 </div>
                 <input type="text" id="searchInput" onkeyup="filterProducts()" 
-                       class="w-full bg-gray-900/90 backdrop-blur border border-gray-600 text-white text-sm rounded-full pl-10 pr-4 py-4 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition placeholder-gray-500" 
+                       class="w-full bg-gray-900/90 backdrop-blur border border-gray-600 text-white text-sm rounded-full pl-10 pr-12 py-4 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition placeholder-gray-500" 
                        placeholder="¿En qué vas a invertir hoy? (Ej: Planta, Split, Herramientas...)">
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <span class="text-gray-600 text-xs border border-gray-700 px-2 py-1 rounded">CTRL+K</span>
+                
+                <!-- Botón Nuevo: Copiar Enlace de Búsqueda -->
+                <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+                    <button onclick="copySearchLink()" class="text-gray-400 hover:text-orange-500 p-2 rounded-full transition" title="Copiar enlace de esta búsqueda">
+                        <i class="fas fa-link"></i>
+                    </button>
                 </div>
             </div>
             
@@ -710,6 +714,17 @@
             if(results.data.length === 0) { showError("No hay datos."); return; }
             parseData(results.data);
             startSocialProof();
+            groupedProducts = Array.from(groupsMap.values());
+        renderCategories();
+        
+        // --- CAMBIO AQUÍ ---
+        // 1. Primero cargamos destacados por defecto
+        showFeaturedProducts(); 
+        document.getElementById('loading').style.display = 'none';
+
+        // 2. INMEDIATAMENTE revisamos si hay una orden en la URL
+        checkUrlSearch(); 
+        // -------------------
         },
         error: function() { showError("Error de conexión."); }
     });
@@ -1418,6 +1433,46 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
         document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
     }
 });
+
+// --- DEEP LINKING: BUSQUEDA POR URL ---
+    
+    // 1. Verificar si hay búsqueda en la URL al cargar
+    function checkUrlSearch() {
+        const params = new URLSearchParams(window.location.search);
+        const query = params.get('q'); // Busca el parametro 'q'
+        
+        if (query) {
+            // Escribimos en el buscador
+            document.getElementById('searchInput').value = query;
+            // Ejecutamos el filtro
+            filterProducts();
+            // Bajamos la pantalla hasta los resultados
+            setTimeout(() => {
+                document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+            }, 500); // Pequeño retraso para asegurar que cargó
+        }
+    }
+
+    // 2. Generar enlace para compartir la búsqueda actual
+    function copySearchLink() {
+        const term = document.getElementById('searchInput').value.trim();
+        if(!term) {
+            showToast("⚠️ Escribe algo para buscar primero.");
+            return;
+        }
+
+        // Construimos la URL: tuweb.com/?q=loquebuscaste
+        const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        const finalUrl = `${baseUrl}?q=${encodeURIComponent(term)}`;
+        
+        // Si hay un gestor activo, le añadimos el ref también
+        const currentRef = localStorage.getItem('multistore_ref');
+        const shareUrl = currentRef ? `${finalUrl}&ref=${currentRef}` : finalUrl;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(`🔗 Enlace copiado: Envíalo al cliente.`);
+        });
+    }
 </script>
 
     <!-- 4. SOCIAL PROOF: WALL OF TRUTH (Integración Real) -->
