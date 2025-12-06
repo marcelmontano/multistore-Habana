@@ -246,9 +246,10 @@
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-500 group-focus-within:text-orange-500 transition"></i>
                 </div>
-                <input type="text" id="searchInput" onkeyup="filterProducts()" 
-                       class="w-full bg-gray-900/90 backdrop-blur border border-gray-600 text-white text-sm rounded-full pl-10 pr-12 py-4 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition placeholder-gray-500" 
-                       placeholder="¿En qué vas a invertir hoy? (Ej: Planta, Split, Herramientas...)">
+                <!-- BUSCADOR MODIFICADO (Sin onkeyup) -->
+<input type="text" id="searchInput" 
+       class="w-full bg-gray-900/90 backdrop-blur border border-gray-600 text-white text-sm rounded-full pl-10 pr-12 py-4 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition placeholder-gray-500" 
+       placeholder="¿En qué vas a invertir hoy? (Ej: Planta, Split, Herramientas...)">
                 
                 <!-- Botón Nuevo: Copiar Enlace de Búsqueda -->
                 <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
@@ -1745,14 +1746,19 @@ if (nameLower.includes('split') || nameLower.includes('nevera')) {
 }
 // --- FUNCIÓN DE BÚSQUEDA REPARADA ---
 function filterProducts() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const input = document.getElementById('searchInput');
+    const q = input.value.toLowerCase().trim();
     
+    // Si el buscador está vacío
     if(!q) { 
         renderGrid(groupedProducts); 
         document.getElementById('catalog-title').innerHTML = "Inventario Disponible";
+        // Limpiar URL
+        window.history.replaceState(null, null, window.location.pathname);
         return; 
     }
 
+    // Filtrado optimizado
     const filtered = groupedProducts.filter(group => {
         const variant = group.variants[0]; 
         const searchString = `
@@ -1769,9 +1775,9 @@ function filterProducts() {
 
     const count = filtered.length;
     if(count > 0) {
-        document.getElementById('catalog-title').innerHTML = `🔍 Resultados para: <span class="text-orange-500">"${q}"</span> (${count})`;
+        document.getElementById('catalog-title').innerHTML = `🔍 Resultados para: <span class="text-orange-500">"${input.value}"</span> (${count})`;
     } else {
-        document.getElementById('catalog-title').innerHTML = `⚠️ No encontramos nada para: <span class="text-gray-500">"${q}"</span>`;
+        document.getElementById('catalog-title').innerHTML = `⚠️ No encontramos nada para: <span class="text-gray-500">"${input.value}"</span>`;
         document.getElementById('product-grid').innerHTML = `
             <div class="col-span-full text-center py-10 opacity-50">
                 <i class="fas fa-search text-4xl mb-2"></i>
@@ -2477,5 +2483,34 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
             }
         });
     </script>
+    <script>
+    // --- SOLUCIÓN AL CONGELAMIENTO (DEBOUNCE) ---
+    let searchTimeout; // Variable para guardar el temporizador
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+        // 1. Cada vez que tocas una tecla, cancelamos la búsqueda anterior
+        clearTimeout(searchTimeout);
+        
+        // 2. Esperamos 300ms (0.3 segundos) antes de buscar
+        searchTimeout = setTimeout(() => {
+            filterProducts();
+            updateSearchURL(); // Actualizamos la URL para que no se quede trabada al recargar
+        }, 300);
+    });
+
+    // Función extra para limpiar la URL cuando borras la búsqueda
+    function updateSearchURL() {
+        const term = document.getElementById('searchInput').value.trim();
+        const baseUrl = window.location.pathname;
+        
+        if (term) {
+            // Si hay texto, actualizamos la URL sin recargar
+            window.history.replaceState(null, null, `${baseUrl}?q=${encodeURIComponent(term)}`);
+        } else {
+            // Si borraste todo, limpiamos la URL
+            window.history.replaceState(null, null, baseUrl);
+        }
+    }
+</script>
 </body> <!-- Aquí cierra el body -->
 </html>
