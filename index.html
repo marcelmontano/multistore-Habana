@@ -177,6 +177,26 @@
             </div>
         </div>
     </nav>
+
+    <!-- BURBUJA EXPLICATIVA MODO AHORRO (NUEVO) -->
+<div id="liteTooltip" class="fixed top-16 right-16 z-[70] hidden animate-bounce">
+    <div class="bg-blue-600 text-white text-xs p-3 rounded-xl shadow-2xl relative border border-blue-400 max-w-[200px]">
+        <!-- Flecha apuntando arriba -->
+        <div class="absolute -top-1 right-6 w-3 h-3 bg-blue-600 rotate-45 border-l border-t border-blue-400"></div>
+        
+        <div class="flex items-start gap-2">
+            <i class="fas fa-bolt text-yellow-300 text-lg mt-1"></i>
+            <div>
+                <p class="font-bold text-yellow-300 mb-1">¿Internet Lento?</p>
+                <p class="leading-tight mb-2">Toca el rayo para ocultar las fotos y <span class="font-bold underline">ahorrar datos</span>.</p>
+                <button onclick="dismissLiteTooltip()" class="bg-white text-blue-600 px-3 py-1 rounded-full font-bold text-[10px] w-full hover:bg-gray-100">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- LEAD MAGNET: LISTA VIP (Con botón de cerrar) -->
 <div id="leadMagnetBar" class="bg-gradient-to-r from-orange-600 to-red-600 text-white py-2 px-4 shadow-lg relative z-40 transition-all duration-500">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center md:text-left pr-8">
@@ -592,6 +612,25 @@ function applyLiteMode() {
         document.getElementById('liteModeBtn').classList.remove('bg-yellow-900', 'border-yellow-500', 'text-white');
     }
 }
+// --- LÓGICA DE LA BURBUJA EXPLICATIVA ---
+    
+    // 1. Mostrar burbuja 2 segundos después de entrar (si no la ha visto antes)
+    setTimeout(() => {
+        if (!localStorage.getItem('multistore_tooltip_seen')) {
+            document.getElementById('liteTooltip').classList.remove('hidden');
+        }
+    }, 2000);
+
+    // 2. Función para cerrar la burbuja
+    function dismissLiteTooltip() {
+        document.getElementById('liteTooltip').classList.add('hidden');
+        localStorage.setItem('multistore_tooltip_seen', 'true');
+        
+        // Efecto visual: Resaltar el botón del rayo un momento
+        const btn = document.getElementById('liteModeBtn');
+        btn.classList.add('ring-4', 'ring-yellow-400');
+        setTimeout(() => btn.classList.remove('ring-4', 'ring-yellow-400'), 1000);
+    }
 
     // --- COLECCIONES INTELIGENTES (Marketing para Cuba) ---
     // Aquí defines el Nombre del Botón y las palabras clave que busca en el producto
@@ -2082,22 +2121,7 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
     </div>
 </section>
 
-<!-- SECCIÓN LOGÍSTICA DISTRIBUIDA DINÁMICA -->
-<section class="py-16 bg-[#0f172a] border-t border-gray-800">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-10">
-            <h3 class="text-3xl font-bold text-white mb-2">Logística <span class="text-orange-500">Distribuida</span></h3>
-            <p class="text-gray-400 text-sm max-w-2xl mx-auto">
-                Cada proveedor tiene sus propias reglas de garantía y envío. 
-                <span class="text-white font-bold">Revisa esta tabla antes de pedir.</span>
-            </p>
-        </div>
 
-        <!-- AQUÍ SE GENERAN LAS TARJETAS AUTOMÁTICAMENTE -->
-        <div id="logistics-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        
-    </div>
-</section>
 
 <!-- SCRIPT PARA GENERAR TARJETAS LOGÍSTICAS -->
 <script>
@@ -2200,7 +2224,21 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
                     </div>
                 </details>
             </div>
+            <!-- Pregunta Nueva: Modo Ahorro -->
+<div class="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+    <details class="group">
+        <summary class="flex justify-between items-center cursor-pointer p-4 text-white font-bold">
+            <span>¿Qué es el rayo ⚡ en el menú?</span>
+            <span class="transition group-open:rotate-180"><i class="fas fa-chevron-down text-orange-500"></i></span>
+        </summary>
+        <div class="p-4 pt-0 text-gray-400 text-sm border-t border-gray-800 mt-2">
+            Es el <strong class="text-yellow-500">Modo Ahorro de Datos</strong>. Si tu conexión en Cuba está lenta (ETECSA/Datos Móviles), actívalo para ocultar las imágenes. La tienda cargará al instante y gastarás menos megas.
         </div>
+    </details>
+</div>
+        </div>
+
+        
         
         <!-- Trust Footer -->
         <div class="mt-10 flex justify-center items-center gap-6 opacity-50 grayscale hover:grayscale-0 transition duration-500">
