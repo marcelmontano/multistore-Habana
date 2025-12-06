@@ -883,6 +883,11 @@
         // Guardamos la cantidad actual para la próxima visita
         localStorage.setItem('product_count', currentCount);
         // --------------------------------------------
+        // Guardamos la cantidad actual para la próxima visita
+        localStorage.setItem('product_count', currentCount);
+        
+        // --- AGREGA ESTO AQUÍ: EJECUTAR DEEP LINKING AL TERMINAR DE CARGAR ---
+        checkDeepLinks();
     
     }
 
@@ -1075,6 +1080,26 @@
     function updateModalVariant() {
         const idx = document.getElementById('variantSelect').value || 0;
         selectedVariant = currentGroup.variants[idx];
+        // --- BOTÓN COMPARTIR PRODUCTO ---
+    // Buscamos el contenedor del título (asegúrate de que tu HTML del modal tenga un ID o estructura para esto, 
+    // o inyéctalo dinámicamente).
+    
+    // Una forma fácil es agregarlo al contenedor de "Detalles" o crear un botón flotante en el modal.
+    // Vamos a inyectarlo en el bloque HTML del modal.
+    
+    // Busca en tu HTML (arriba en el código) el elemento con id="modalTitle".
+    // Vamos a modificarlo dinámicamente aquí en JS para añadirle el icono de copiar al lado.
+    
+    const titleEl = document.getElementById('modalTitle');
+    // Guardamos el nombre limpio
+    const cleanName = currentGroup.name;
+    
+    titleEl.innerHTML = `
+        ${cleanName} 
+        <button onclick="copyProductLink('${cleanName.replace(/'/g, "\\'")}')" class="ml-2 text-sm text-gray-500 hover:text-orange-500 transition align-middle" title="Copiar enlace directo a este equipo">
+            <i class="fas fa-link"></i>
+        </button>
+    `;
         
         // 1. Obtenemos las reglas generales del proveedor
         const sRule = SUPPLIER_RULES[selectedVariant.supplier] || SUPPLIER_RULES["VP"];
@@ -1643,6 +1668,51 @@ function filterProducts() {
         `;
     }
 }
+// --- FUNCIÓN MAESTRA DE ENLACES COMPARTIDOS ---
+    function checkDeepLinks() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // 1. ¿Viene un Producto específico? (?p=Nombre del Producto)
+        const prodParam = params.get('p');
+        if (prodParam) {
+            const prodName = decodeURIComponent(prodParam);
+            // Buscamos si existe
+            const exists = groupedProducts.find(g => g.name === prodName);
+            if (exists) {
+                // Pequeño retraso para dar efecto visual
+                setTimeout(() => openProductModal(prodName), 500); 
+                return; // Si abre producto, no hace búsqueda
+            }
+        }
+
+        // 2. ¿Viene una Búsqueda? (?q=Refrigeradores)
+        const searchParam = params.get('q');
+        if (searchParam) {
+            const query = decodeURIComponent(searchParam);
+            document.getElementById('searchInput').value = query;
+            filterProducts();
+            setTimeout(() => {
+                document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+            }, 500);
+        }
+    }
+    function copyProductLink(productName) {
+        // Generar URL base
+        const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        // Crear parámetro ?p=Nombre%20Del%20Producto
+        const finalUrl = `${baseUrl}?p=${encodeURIComponent(productName)}`;
+        
+        // Si hay referido activo, lo pegamos también
+        const currentRef = localStorage.getItem('multistore_ref');
+        const shareUrl = currentRef ? `${finalUrl}&ref=${currentRef}` : finalUrl;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(`🔗 Enlace copiado: ${productName}`);
+        }).catch(err => {
+            console.error('Error al copiar', err);
+            prompt("Copia este enlace manualmente:", shareUrl);
+        });
+    }
 
 // Enter para bajar al catálogo
 document.getElementById('searchInput').addEventListener('keypress', function (e) {
@@ -1678,16 +1748,15 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
             return;
         }
 
-        // Construimos la URL: tuweb.com/?q=loquebuscaste
         const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        // Usamos ?q= para búsqueda
         const finalUrl = `${baseUrl}?q=${encodeURIComponent(term)}`;
         
-        // Si hay un gestor activo, le añadimos el ref también
         const currentRef = localStorage.getItem('multistore_ref');
         const shareUrl = currentRef ? `${finalUrl}&ref=${currentRef}` : finalUrl;
 
         navigator.clipboard.writeText(shareUrl).then(() => {
-            showToast(`🔗 Enlace copiado: Envíalo al cliente.`);
+            showToast(`🔗 Enlace de búsqueda copiado.`);
         });
     }
 
