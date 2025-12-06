@@ -106,6 +106,18 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+        /* --- ESTILOS MODO AHORRO (LITE) --- */
+.lite-mode .product-image-container img { display: none !important; }
+.lite-mode .product-image-container { 
+    background: #1e293b; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+    min-height: 200px;
+}
+.lite-placeholder { display: none; }
+.lite-mode .lite-placeholder { display: flex; flex-direction: column; align-items: center; color: #64748b; }
     </style>
 </head>
     </style>
@@ -143,20 +155,25 @@
     </div>
 </div>
 
-                <!-- DERECHA: Tasa + CARRITO FIJO -->
-                <div class="flex items-center gap-4">
-                    <!-- Tasa (Solo PC) -->
-                    <div class="hidden md:flex items-center bg-gray-800 px-3 py-1 rounded-full border border-gray-600">
-                        <i class="fas fa-money-bill-wave text-green-400 mr-2"></i>
-                        <span class="text-xs text-gray-300">Tasa: <span id="displayRate" class="font-bold text-white">---</span></span>
-                    </div>
+                <!-- DERECHA: Tasa + MODO LITE + CARRITO -->
+<div class="flex items-center gap-2 md:gap-4">
+    <!-- Tasa (Solo PC) -->
+    <div class="hidden md:flex items-center bg-gray-800 px-3 py-1 rounded-full border border-gray-600">
+        <i class="fas fa-money-bill-wave text-green-400 mr-2"></i>
+        <span class="text-xs text-gray-300">Tasa: <span id="displayRate" class="font-bold text-white">---</span></span>
+    </div>
 
-                    <!-- BOTÓN CARRITO (Integrado aquí para que no flote mal en móviles) -->
-                    <button onclick="openCartModal()" class="relative bg-orange-600/20 hover:bg-orange-600/40 border border-orange-500/50 p-2 rounded-lg transition-all group">
-                        <i class="fas fa-shopping-cart text-xl text-orange-500 group-hover:text-white transition"></i>
-                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border border-gray-900 hidden">0</span>
-                    </button>
-                </div>
+    <!-- BOTÓN MODO AHORRO (NUEVO) -->
+    <button onclick="toggleLiteMode()" id="liteModeBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-yellow-500 p-2 rounded-lg transition active:scale-95" title="Activar Modo Ahorro de Datos">
+        <i class="fas fa-bolt"></i>
+    </button>
+
+    <!-- BOTÓN CARRITO -->
+    <button onclick="openCartModal()" class="relative bg-orange-600/20 hover:bg-orange-600/40 border border-orange-500/50 p-2 rounded-lg transition-all group">
+        <i class="fas fa-shopping-cart text-xl text-orange-500 group-hover:text-white transition"></i>
+        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border border-gray-900 hidden">0</span>
+    </button>
+</div>
             </div>
         </div>
     </nav>
@@ -359,7 +376,7 @@
                 </div>
 
                 <div class="mb-6">
-                    <p class="text-gray-500 text-xs uppercase font-bold mb-1">Precio Final:</p>
+                    <p class="text-gray-500 text-xs uppercase font-bold mb-1">Precio Final (Incluye Gestión):</p>
                     <div class="flex items-end gap-3">
                         <!-- PEGAR ESTO ENCIMA DEL PRECIO EN EL MODAL -->
 <div id="dynamicLogisticsContainer" class="mb-4 hidden animate-fade-in">
@@ -546,6 +563,35 @@
     let cart = [];
     let currentModalQty = 1;
     let currentAffiliate = localStorage.getItem('multistore_ref') || null;
+    // --- NUEVA VARIABLE GLOBAL ---
+let isLiteMode = localStorage.getItem('multistore_lite') === 'true';
+
+// --- APLICAR MODO AL INICIAR ---
+document.addEventListener("DOMContentLoaded", function() {
+    applyLiteMode();
+});
+
+function toggleLiteMode() {
+    isLiteMode = !isLiteMode;
+    localStorage.setItem('multistore_lite', isLiteMode);
+    applyLiteMode();
+    // Volvemos a renderizar si ya hay productos cargados
+    if(groupedProducts.length > 0) renderGrid(groupedProducts); 
+    
+    // Feedback visual
+    const msg = isLiteMode ? "⚡ Modo Ahorro ACTIVADO (Sin fotos)" : "📷 Modo Fotos ACTIVADO";
+    showToast(msg);
+}
+
+function applyLiteMode() {
+    if (isLiteMode) {
+        document.body.classList.add('lite-mode');
+        document.getElementById('liteModeBtn').classList.add('bg-yellow-900', 'border-yellow-500', 'text-white');
+    } else {
+        document.body.classList.remove('lite-mode');
+        document.getElementById('liteModeBtn').classList.remove('bg-yellow-900', 'border-yellow-500', 'text-white');
+    }
+}
 
     // --- COLECCIONES INTELIGENTES (Marketing para Cuba) ---
     // Aquí defines el Nombre del Botón y las palabras clave que busca en el producto
@@ -749,22 +795,25 @@
     function loadData() {
         const CACHE_KEY = 'multistore_data_v1';
         const CACHE_TIME_KEY = 'multistore_time';
-        const EXPIRY_MS = 3600000; // 1 Hora (ajusta si quieres más tiempo)
+        const EXPIRY_MS = 3600000; // 1 Hora de memoria
 
         const cachedData = localStorage.getItem(CACHE_KEY);
         const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
         const now = new Date().getTime();
 
-        // Si hay datos guardados y no han pasado 60 min, usamos la caché (0 gasto de datos)
+        // Si hay datos guardados y son recientes (menos de 1 hora)
         if (cachedData && cachedTime && (now - cachedTime < EXPIRY_MS)) {
             console.log("Cargando desde caché local (Ahorro de datos)");
             parseData(JSON.parse(cachedData));
             startSocialProof();
             document.getElementById('loading').style.display = 'none';
-            // Aviso sutil de que son datos guardados
-            showToast("⚡ Cargado instantáneo (Modo Ahorro)");
+            
+            // --- AQUÍ ESTÁ EL CAMBIO DEL PASO 5 ---
+            showToast("⚡ Catálogo cargado al instante (Caché)");
+            // ---------------------------------------
+
         } else {
-            // Si no hay caché o expiró, descargamos de internet
+            // Si no hay caché o ya es vieja, descargamos de internet
             console.log("Descargando datos frescos...");
             Papa.parse(PROXY_URL, {
                 download: true, header: true, skipEmptyLines: true,
@@ -779,10 +828,11 @@
                     startSocialProof();
                 },
                 error: function() { 
-                    // Si falla internet pero tenemos caché vieja, úsala como respaldo
+                    // Si falla internet (ej. ETECSA lento) pero tenemos caché vieja, úsala
                     if(cachedData) {
                         showToast("⚠️ Sin conexión. Mostrando datos guardados.");
                         parseData(JSON.parse(cachedData));
+                        document.getElementById('loading').style.display = 'none';
                     } else {
                         showError("Error de conexión y no hay datos guardados."); 
                     }
@@ -963,6 +1013,30 @@
         renderGrid(filtered);
         document.getElementById('view-all-container').classList.add('hidden');
         document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+
+        // --- LÓGICA DE TÍTULO Y COMPARTIR ---
+        const titleEl = document.getElementById('catalog-title');
+        
+        if (category === 'all') {
+            titleEl.innerHTML = "Inventario Disponible";
+            // Limpiamos la URL
+            window.history.replaceState(null, null, window.location.pathname);
+        } else {
+            // 1. Actualizamos el Título
+            titleEl.innerHTML = `Categoría: <span class="text-orange-500">${category}</span>`;
+            
+            // 2. Agregamos botón de copiar al lado del título
+            titleEl.innerHTML += `
+                <button onclick="copyCategoryLink('${category}')" class="ml-3 text-sm bg-gray-800 hover:bg-orange-600 text-white px-3 py-1 rounded-full border border-gray-600 transition" title="Copiar enlace de esta categoría">
+                    <i class="fas fa-link"></i> Compartir
+                </button>
+            `;
+
+            // 3. Actualizamos la URL en el navegador sin recargar (Magia Pro)
+            // Esto permite que si copias la URL de la barra de direcciones, ya funcione.
+            const newUrl = `${window.location.pathname}?cat=${encodeURIComponent(category)}`;
+            window.history.replaceState(null, null, newUrl);
+        }
     }
 
     function renderGrid(productsList) {
@@ -1073,50 +1147,56 @@
     function updateModalVariant() {
         const idx = document.getElementById('variantSelect').value || 0;
         selectedVariant = currentGroup.variants[idx];
-        // --- BOTÓN COMPARTIR PRODUCTO ---
-    // Buscamos el contenedor del título (asegúrate de que tu HTML del modal tenga un ID o estructura para esto, 
-    // o inyéctalo dinámicamente).
-    
-    // Una forma fácil es agregarlo al contenedor de "Detalles" o crear un botón flotante en el modal.
-    // Vamos a inyectarlo en el bloque HTML del modal.
-    
-    // Busca en tu HTML (arriba en el código) el elemento con id="modalTitle".
-    // Vamos a modificarlo dinámicamente aquí en JS para añadirle el icono de copiar al lado.
-    
-    const titleEl = document.getElementById('modalTitle');
-    // Guardamos el nombre limpio
-    const cleanName = currentGroup.name;
-    
-    titleEl.innerHTML = `
-        ${cleanName} 
-        <button onclick="copyProductLink('${cleanName.replace(/'/g, "\\'")}')" class="ml-2 text-sm text-gray-500 hover:text-orange-500 transition align-middle" title="Copiar enlace directo a este equipo">
-            <i class="fas fa-link"></i>
-        </button>
-    `;
+
+        // --- TITULO Y LINK DE COMPARTIR ---
+        const titleEl = document.getElementById('modalTitle');
+        const cleanName = currentGroup.name;
+        titleEl.innerHTML = `
+            ${cleanName} 
+            <button onclick="copyProductLink('${cleanName.replace(/'/g, "\\'")}')" class="ml-2 text-sm text-gray-500 hover:text-orange-500 transition align-middle" title="Copiar enlace">
+                <i class="fas fa-link"></i>
+            </button>
+        `;
         
-        // 1. Obtenemos las reglas generales del proveedor
+        // 1. OBTENER REGLAS PROVEEDOR
         const sRule = SUPPLIER_RULES[selectedVariant.supplier] || SUPPLIER_RULES["VP"];
 
-        // 2. LÓGICA DE PRIORIDAD DE GARANTÍA
-        // Si el producto tiene algo escrito en la columna garantía, lo usamos.
-        // Si no, usamos la garantía general definida en SUPPLIER_RULES.
-        let displayWarranty = sRule.warranty || 'Consultar al recibir'; // Valor por defecto (Regla General)
-        
-        if (selectedVariant.warranty && selectedVariant.warranty.trim() !== "") {
-            displayWarranty = selectedVariant.warranty; // Valor Específico (Excel)
+        // --- CALCULO ENVÍO ESPECÍFICO (TU CAMBIO NUEVO) ---
+        let specificShippingText = getShippingText(sRule); // Texto por defecto (rango)
+
+        // Si es VP, calculamos precio exacto por peso
+        if (sRule.shippingRule === 'weight_vp') {
+            const w = selectedVariant.weight || 0;
+            let cost = 1;
+            if (w > 50 && w <= 180) cost = 3;
+            else if (w > 180) cost = 10;
+            specificShippingText = `Envío: $${cost}.00 USD`;
+        } 
+        // Si es Tarifa Fija (ATHV)
+        else if (sRule.shippingRule === 'flat_4') {
+            specificShippingText = "Envío Fijo: $4.00 USD";
+        }
+        // Si es Zona (AA)
+        else if (sRule.shippingRule === 'zone_aa') {
+            specificShippingText = "Habana Gratis / Ext: $5";
         }
 
-        // Renderizado de datos básicos
+        // 2. GARANTIA (Prioridad: Excel > Regla General)
+        let displayWarranty = sRule.warranty || 'Consultar al recibir';
+        if (selectedVariant.warranty && selectedVariant.warranty.trim() !== "") {
+            displayWarranty = selectedVariant.warranty;
+        }
+
+        // 3. ACTUALIZAR DOM BÁSICO
         document.getElementById('modalMainImg').src = selectedVariant.thumb;
         document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
         document.getElementById('modalWeightDisplay').innerText = `${selectedVariant.weight} lb`;
         document.getElementById('modalDesc').innerText = selectedVariant.desc || 'Sin descripción.';
 
-        // Inyección HTML con la Garantía Correcta
+        // 4. INYECCIÓN HTML TARJETA LOGÍSTICA
         const container = document.getElementById('dynamicLogisticsContainer');
-        
-        // 1. Mostrar/Ocultar Peso (Si hiciste el cambio del HTML Paso 1)
         const weightEl = document.getElementById('weightContainer');
+        
         if(weightEl) {
             if(selectedVariant.weight > 0) {
                 weightEl.classList.remove('hidden');
@@ -1126,37 +1206,33 @@
             }
         }
 
-        // 2. Nueva Tarjeta de Proveedor (Diseño Responsive: Vertical en móvil / Horizontal en PC)
         container.innerHTML = `
             <div class="flex flex-col sm:flex-row gap-2 mb-4 animate-fade-in w-full">
                 
-                <!-- CAJA 1: Info Proveedor (Ocupa más espacio) -->
+                <!-- CAJA 1: Info Proveedor -->
                 <div class="flex-1 bg-${sRule.color}-900/20 border border-${sRule.color}-500/30 rounded-lg p-2.5 relative flex flex-col justify-center min-w-0">
-                    <!-- Etiqueta superior derecha -->
                     <div class="absolute top-0 right-0 bg-${sRule.color}-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">
                         ${selectedVariant.supplier}
                     </div>
 
                     <div class="flex items-center gap-2.5">
-                        <!-- Icono -->
                         <div class="shrink-0 w-8 h-8 rounded-full bg-${sRule.color}-500/20 flex items-center justify-center border border-${sRule.color}-500/20">
                             <i class="fas ${sRule.icon} text-${sRule.color}-400 text-sm"></i>
                         </div>
                         
-                        <!-- Textos (con truncate para evitar desbordes) -->
                         <div class="min-w-0 flex-1">
-                            <p class="text-gray-400 text-[8px] uppercase font-bold tracking-wide leading-none mb-1">Presente en:</p>
+                            <p class="text-gray-400 text-[8px] uppercase font-bold tracking-wide leading-none mb-1">Gestionado por:</p>
                             <p class="text-white font-bold text-xs truncate leading-tight mb-1" title="${sRule.name}">${sRule.name}</p>
                             <div class="flex items-center">
                                 <span class="text-[9px] text-gray-300 bg-gray-800 px-1.5 py-0.5 rounded border border-gray-600 truncate">
-    <i class="fas fa-truck mr-1 text-[8px]"></i>${getDynamicShippingText(selectedVariant, sRule)}
-</span>
+                                    <i class="fas fa-truck mr-1 text-[8px]"></i>${specificShippingText}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- CAJA 2: Garantía (Más compacta y ajustada) -->
+                <!-- CAJA 2: Garantía -->
                 <div class="sm:w-1/3 bg-gray-800/60 border border-gray-700 rounded-lg p-2 flex flex-col justify-center items-center text-center">
                     <p class="text-gray-500 text-[8px] uppercase font-bold mb-1">Garantía Protegida</p>
                     <div class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-1 rounded text-[10px] font-bold w-full whitespace-nowrap overflow-hidden text-ellipsis">
@@ -1666,23 +1742,35 @@ function filterProducts() {
     }
 }
 // --- FUNCIÓN MAESTRA DE ENLACES COMPARTIDOS ---
+    // --- DEEP LINKING MEJORADO ---
     function checkDeepLinks() {
         const params = new URLSearchParams(window.location.search);
         
-        // 1. ¿Viene un Producto específico? (?p=Nombre del Producto)
+        // 1. ¿Viene un Producto? (?p=...)
         const prodParam = params.get('p');
         if (prodParam) {
             const prodName = decodeURIComponent(prodParam);
-            // Buscamos si existe
             const exists = groupedProducts.find(g => g.name === prodName);
             if (exists) {
-                // Pequeño retraso para dar efecto visual
                 setTimeout(() => openProductModal(prodName), 500); 
-                return; // Si abre producto, no hace búsqueda
+                return;
             }
         }
 
-        // 2. ¿Viene una Búsqueda? (?q=Refrigeradores)
+        // 2. ¿Viene una Categoría? (?cat=...)  <--- ESTO ES LO NUEVO
+        const catParam = params.get('cat');
+        if (catParam) {
+            const catName = decodeURIComponent(catParam);
+            // Esperamos un poco a que cargue el grid y filtramos
+            setTimeout(() => {
+                showFullCatalog(catName);
+                // Bajamos la pantalla hasta el catálogo
+                document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+            }, 500);
+            return;
+        }
+
+        // 3. ¿Viene una Búsqueda? (?q=...)
         const searchParam = params.get('q');
         if (searchParam) {
             const query = decodeURIComponent(searchParam);
@@ -1708,6 +1796,21 @@ function filterProducts() {
         }).catch(err => {
             console.error('Error al copiar', err);
             prompt("Copia este enlace manualmente:", shareUrl);
+        });
+    }
+    function copyCategoryLink(categoryName) {
+        const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        const finalUrl = `${baseUrl}?cat=${encodeURIComponent(categoryName)}`;
+        
+        // Si tienes sistema de referidos activo, lo añadimos
+        const currentRef = localStorage.getItem('multistore_ref');
+        const shareUrl = currentRef ? `${finalUrl}&ref=${currentRef}` : finalUrl;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(`🔗 Enlace de categoría copiado: ${categoryName}`);
+        }).catch(err => {
+            console.error('Error al copiar', err);
+            prompt("Copia este enlace:", shareUrl);
         });
     }
 
@@ -2006,38 +2109,48 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
         Object.keys(SUPPLIER_RULES).forEach(key => {
             const s = SUPPLIER_RULES[key];
             
-            // Creamos la tarjeta HTML
-            const card = document.createElement('div');
-            // Clases base + borde del color del proveedor
-            card.className = `bg-[#0f172a] rounded-xl border border-${s.color}-900/50 p-6 relative overflow-hidden group hover:border-${s.color}-500 transition duration-300`;
-            
-            card.innerHTML = `
-                <div class="absolute top-0 right-0 bg-${s.color}-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg z-10 uppercase">
-                    ALMACÉN ${key}
-                </div>
-                
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-12 h-12 rounded-full bg-${s.color}-900/30 flex items-center justify-center border border-${s.color}-500/30">
-                        <i class="fas ${s.icon} text-${s.color}-500 text-2xl"></i>
-                    </div>
-                    <h4 class="text-white font-bold text-lg leading-tight">${s.categoryTitle || s.name}</h4>
-                </div>
+            // 2. LOGICA DE IMAGEN vs MODO LITE
+    // Usamos lazy loading nativo
+    const imgHTML = `
+        <img src="${v.thumb}" loading="lazy" decoding="async" 
+             class="w-full h-full object-contain group-hover:scale-110 transition duration-500" 
+             onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">
+        
+        <!-- Placeholder para Modo Lite -->
+        <div class="lite-placeholder text-center p-4">
+            <i class="fas fa-bolt text-4xl text-yellow-600 mb-2 opacity-50"></i>
+            <span class="text-xs font-bold text-gray-500 uppercase">Modo Ahorro</span>
+            <span class="text-[10px] text-gray-600">Toca para ver detalles</span>
+        </div>
+    `;
 
-                <div class="bg-gray-900/50 rounded-lg p-4 space-y-3 border border-gray-800">
-                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Garantía:</span>
-                        <span class="text-green-400 font-bold text-xs text-right">${s.warranty || 'Consultar'}</span>
-                    </div>
-                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Envío Habana:</span>
-                        <span class="text-white font-bold text-xs text-right">${s.shippingText || 'A Cotizar'}</span>
-                    </div>
-                    <div class="flex justify-between items-center pt-1">
-                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Recogida:</span>
-                        <span class="text-gray-300 text-xs text-right font-medium italic">${s.location || 'Sede Central'}</span>
-                    </div>
-                </div>
-            `;
+    // 3. ARMAMOS LA TARJETA
+    // --- INICIO CÓDIGO DE ESCASEZ ---
+    let stockBadge = '';
+    let stockNum = parseInt(v.stock) || 100;
+    if (stockNum > 0 && stockNum <= 3) {
+        stockBadge = `
+            <div class="absolute bottom-2 left-2 bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg z-20 animate-pulse flex items-center gap-1 border border-white/20">
+                <i class="fas fa-fire text-yellow-300"></i> ¡Quedan ${stockNum}!
+            </div>`;
+    }
+
+    card.innerHTML = `
+        <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10 shadow-md">${v.supplier}</div>
+        
+        <!-- CONTENEDOR DE IMAGEN (Ahora soporta Lite Mode via CSS) -->
+        <div class="product-image-container h-64 p-4 relative bg-gray-800/50 flex items-center justify-center overflow-hidden">
+            ${imgHTML}
+            ${stockBadge}
+        </div>
+
+        <div class="p-5 flex-1 flex flex-col border-t border-gray-700 bg-gray-900/80">
+            <h3 class="text-white font-bold text-lg mb-1 line-clamp-2">${group.name}</h3>
+            <div class="mt-auto pt-3 flex justify-between items-center">
+                <span class="text-xl font-black text-white">$${formatPrice(v.price)}</span>
+                <button class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>`;
             grid.appendChild(card);
         });
     });
@@ -2325,48 +2438,6 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
                 }
             }
         });
-        function getDynamicShippingText(variant, rule) {
-        // 1. REGLA POR PESO (VP) - Calcula precio exacto según libras
-        if (rule.shippingRule === 'weight_vp') {
-            const w = variant.weight || 0;
-            let cost = 0;
-            if (w === 0) return "A cotizar"; // Si no tiene peso
-            if (w <= 50) cost = 1;
-            else if (w <= 180) cost = 3;
-            else cost = 10;
-            
-            return `Envío Exacto: $${cost}.00 USD`;
-        }
-
-        // 2. REGLA POR ZONA (AA) - Muestra la condición clara
-        if (rule.shippingRule === 'zone_aa') {
-            return "Habana: Gratis | Lejos: $5";
-        }
-
-        // 3. REGLA FIJA POR ÍTEM (AS / ACA) - Detecta el tipo de equipo
-        if (rule.shippingRule === 'fixed_item') {
-            let name = (currentGroup.name || "").toLowerCase();
-            let cost = rule.defaultShipping; // Valor base
-
-            // Lógica idéntica a la del checkout
-            if (name.includes('refrigerador') || name.includes('nevera 12') || name.includes('nevera 8') || name.includes('exhibidora')) {
-                cost = (name.includes('20 pies')) ? 15 : 10;
-            } 
-            else if (name.includes('nevera') || name.includes('lavadora') || name.includes('tv 60') || name.includes('tv 50')) {
-                cost = 5;
-            }
-            
-            return `Envío Fijo: $${cost}.00 USD`;
-        }
-
-        // 4. REGLAS SIMPLES (ATHV, AQ, etc)
-        if (rule.shippingRule === 'flat_4') return "Envío Fijo: $4.00 USD";
-        if (rule.shippingRule === 'free_except_far') return "Gratis (Cotorro/Este: $10)";
-        if (rule.shippingRule === 'zone_jp') return "Pago al Chofer (~8000 CUP)";
-
-        // Default
-        return rule.shippingText || "A Consultar";
-    }
     </script>
 </body> <!-- Aquí cierra el body -->
 </html>
