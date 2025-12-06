@@ -359,7 +359,7 @@
                 </div>
 
                 <div class="mb-6">
-                    <p class="text-gray-500 text-xs uppercase font-bold mb-1">Precio Final (Incluye Gestión):</p>
+                    <p class="text-gray-500 text-xs uppercase font-bold mb-1">Precio Final:</p>
                     <div class="flex items-end gap-3">
                         <!-- PEGAR ESTO ENCIMA DEL PRECIO EN EL MODAL -->
 <div id="dynamicLogisticsContainer" class="mb-4 hidden animate-fade-in">
@@ -1145,12 +1145,12 @@
                         
                         <!-- Textos (con truncate para evitar desbordes) -->
                         <div class="min-w-0 flex-1">
-                            <p class="text-gray-400 text-[8px] uppercase font-bold tracking-wide leading-none mb-1">Gestionado por:</p>
+                            <p class="text-gray-400 text-[8px] uppercase font-bold tracking-wide leading-none mb-1">Presente en:</p>
                             <p class="text-white font-bold text-xs truncate leading-tight mb-1" title="${sRule.name}">${sRule.name}</p>
                             <div class="flex items-center">
                                 <span class="text-[9px] text-gray-300 bg-gray-800 px-1.5 py-0.5 rounded border border-gray-600 truncate">
-                                    <i class="fas fa-truck mr-1 text-[8px]"></i>${getShippingText(sRule)}
-                                </span>
+    <i class="fas fa-truck mr-1 text-[8px]"></i>${getDynamicShippingText(selectedVariant, sRule)}
+</span>
                             </div>
                         </div>
                     </div>
@@ -2325,6 +2325,48 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
                 }
             }
         });
+        function getDynamicShippingText(variant, rule) {
+        // 1. REGLA POR PESO (VP) - Calcula precio exacto según libras
+        if (rule.shippingRule === 'weight_vp') {
+            const w = variant.weight || 0;
+            let cost = 0;
+            if (w === 0) return "A cotizar"; // Si no tiene peso
+            if (w <= 50) cost = 1;
+            else if (w <= 180) cost = 3;
+            else cost = 10;
+            
+            return `Envío Exacto: $${cost}.00 USD`;
+        }
+
+        // 2. REGLA POR ZONA (AA) - Muestra la condición clara
+        if (rule.shippingRule === 'zone_aa') {
+            return "Habana: Gratis | Lejos: $5";
+        }
+
+        // 3. REGLA FIJA POR ÍTEM (AS / ACA) - Detecta el tipo de equipo
+        if (rule.shippingRule === 'fixed_item') {
+            let name = (currentGroup.name || "").toLowerCase();
+            let cost = rule.defaultShipping; // Valor base
+
+            // Lógica idéntica a la del checkout
+            if (name.includes('refrigerador') || name.includes('nevera 12') || name.includes('nevera 8') || name.includes('exhibidora')) {
+                cost = (name.includes('20 pies')) ? 15 : 10;
+            } 
+            else if (name.includes('nevera') || name.includes('lavadora') || name.includes('tv 60') || name.includes('tv 50')) {
+                cost = 5;
+            }
+            
+            return `Envío Fijo: $${cost}.00 USD`;
+        }
+
+        // 4. REGLAS SIMPLES (ATHV, AQ, etc)
+        if (rule.shippingRule === 'flat_4') return "Envío Fijo: $4.00 USD";
+        if (rule.shippingRule === 'free_except_far') return "Gratis (Cotorro/Este: $10)";
+        if (rule.shippingRule === 'zone_jp') return "Pago al Chofer (~8000 CUP)";
+
+        // Default
+        return rule.shippingText || "A Consultar";
+    }
     </script>
 </body> <!-- Aquí cierra el body -->
 </html>
