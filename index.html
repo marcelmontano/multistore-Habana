@@ -17,6 +17,10 @@
 <link rel="preconnect" href="https://docs.google.com">
 <link rel="preconnect" href="https://corsproxy.io">
 <link rel="dns-prefetch" href="https://i.imgur.com"> <!-- Si usas imgur -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f97316">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -838,7 +842,7 @@
                 price: finalPrice,
                 color: row.Color || '',
                 format: row.Formato || '',
-                stock: row.Stock || '1',
+                stock: row.Stock || '50',
                 thumb: mainImg,
                 desc: row.Description,
                 weight: extractWeight(row.Description || ''),
@@ -998,12 +1002,27 @@
             }
 
             // 3. ARMAMOS LA TARJETA
+            // --- INICIO CÓDIGO DE ESCASEZ ---
+            let stockBadge = '';
+            // Convertimos el stock a número (por si en Excel está como texto)
+            let stockNum = parseInt(v.stock) || 100; // Si está vacío, asumimos que hay 100
+
+            // Si quedan entre 1 y 3 unidades, mostramos la alerta
+            if (stockNum > 0 && stockNum <= 3) {
+                stockBadge = `
+                    <div class="absolute bottom-2 left-2 bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg z-20 animate-pulse flex items-center gap-1 border border-white/20">
+                        <i class="fas fa-fire text-yellow-300"></i> ¡Solo quedan ${stockNum}!
+                    </div>`;
+            }
+            // --- FIN CÓDIGO DE ESCASEZ ---
+            // 3. ARMAMOS LA TARJETA
             card.innerHTML = `
-                <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10">${v.supplier}</div>
+                <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10 shadow-md">${v.supplier}</div>
                 
-                <!-- Aquí insertamos la variable imgHTML que calculamos arriba -->
-                <div class="product-image-container h-64 p-4 relative bg-gray-800/50">
-                    ${imgHTML}
+                <!-- CONTENEDOR DE IMAGEN -->
+                <div class="product-image-container h-64 p-4 relative bg-gray-800/50 flex items-center justify-center">
+                    ${imgHTML}      <!-- Aquí va la imagen optimizada -->
+                    ${stockBadge}   <!-- Aquí va la alerta roja si queda poco stock -->
                 </div>
 
                 <div class="p-5 flex-1 flex flex-col border-t border-gray-700 bg-gray-900/80">
@@ -1013,6 +1032,7 @@
                         <button class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>`;
+            
             grid.appendChild(card);
         });
     }
@@ -1148,6 +1168,60 @@
             btnConsult.href = `https://wa.me/5358183649?text=${encodeURIComponent(consultMsg)}`;
         }
         // --- FIN CÓDIGO VENTA CONSULTIVA ---
+        // --- INICIO: BOTÓN "PÍDESELO A TU FAMILIAR" ---
+    // 1. Crear el mensaje personalizado para el familiar
+    // Nota: Usamos wa.me/?text para que abra la lista de contactos del usuario y él elija a quién enviarlo
+    const msgFamily = `Hola! Mira, este es el equipo que necesitamos: *${currentGroup.name}*.\nPrecio: $${selectedVariant.price} USD.\n¿Me lo puedes gestionar? Te paso el contacto del vendedor si me dices que sí. 🙏`;
+    
+    // 2. Verificar si el botón ya existe (para no crearlo 2 veces si cambian de color)
+    let btnFamily = document.getElementById('btnFamily');
+
+    // 3. Si no existe, lo creamos y le damos estilo
+    if (!btnFamily) {
+        btnFamily = document.createElement('a');
+        btnFamily.id = 'btnFamily';
+        // Estilo: Azul (para diferenciarlo de WhatsApp verde y Carrito naranja)
+        btnFamily.className = "w-full mb-3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl border border-blue-400 flex items-center justify-center gap-2 transition text-sm shadow-sm cursor-pointer";
+        btnFamily.target = "_blank";
+        btnFamily.innerHTML = `<i class="fas fa-gift text-yellow-300"></i> Pedir a mi Familiar (Enviar Info)`;
+
+        // 4. Insertarlo en el HTML
+        // Buscamos el botón de "Tengo una duda" para ponerlo encima
+        const btnConsult = document.getElementById('btnConsult');
+        const btnAdd = document.getElementById('btnAddToCart');
+        
+        // Si existe el de duda lo ponemos antes, si no, antes del carrito
+        const targetBtn = btnConsult || btnAdd;
+        if(targetBtn) {
+            targetBtn.parentNode.insertBefore(btnFamily, targetBtn);
+        }
+    }
+
+    // 5. Actualizar el enlace con el mensaje del producto actual
+    btnFamily.href = `https://wa.me/?text=${encodeURIComponent(msgFamily)}`;
+    // --- FIN BOTÓN FAMILIAR ---
+
+    // Al final de updateModalVariant, inyecta este HTML:
+// (Lógica simplificada: Si es un Split, sugiere Protector. Si es Moto, sugiere Casco).
+
+let suggestionHTML = '';
+const nameLower = selectedVariant.name ? selectedVariant.name.toLowerCase() : '';
+
+// Ejemplo de lógica simple (puedes hacerla más compleja)
+if (nameLower.includes('split') || nameLower.includes('nevera')) {
+    suggestionHTML = `
+        <div class="mt-4 bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">
+            <p class="text-xs text-blue-200 font-bold mb-2">💡 No olvides proteger tu equipo:</p>
+            <button onclick="document.getElementById('searchInput').value='protector'; filterProducts(); closeProductModal();" class="text-xs text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-500 transition">
+                Ver Protectores de Voltaje 110v/220v
+            </button>
+        </div>
+    `;
+}
+
+// Inyectar esto antes de los botones de acción
+// (Requiere un div contenedor en tu HTML del modal para insertarlo limpiamente, 
+// o usar append como hicimos antes).
 
     } // <--- Esta es la llave de cierre de updateModalVariant
     }
