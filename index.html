@@ -4,10 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTISTORE | Tu Almacén en La Habana</title>
+    <!-- Meta Tags para Redes Sociales (Estrategia de Confianza PDF) -->
+<meta name="description" content="Tienda online en Cuba. Splits, Neveras, Plantas Eléctricas y más. Pagos en USD, CUP y Zelle. Entrega a domicilio en La Habana.">
+<meta property="og:title" content="MULTISTORE | Electrodomésticos y Piezas en Cuba">
+<meta property="og:description" content="Catálogo actualizado de Splits, Freezers, Motos y Herramientas. Precios en tiempo real.">
+<meta property="og:image" content="https://placehold.co/1200x630/0f172a/f97316?text=MULTISTORE+CUBA"> <!-- CAMBIA ESTO POR UNA FOTO REAL DE TU LOGO -->
+<meta property="og:url" content="https://tudominio.com">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://cdn.tailwindcss.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://docs.google.com">
+<link rel="preconnect" href="https://corsproxy.io">
+<link rel="dns-prefetch" href="https://i.imgur.com"> <!-- Si usas imgur -->
     
     <!-- Librerías -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -37,8 +48,16 @@
     </script>
 
     <style>
-        body { background-color: #020617; color: #e2e8f0; }
-        .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { 
+    background-color: #020617; 
+    /* Fondo optimizado estilo "Cyberpunk" sin cargar scripts */
+    background-image: 
+        radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 70%),
+        radial-gradient(circle at 100% 0%, #431407 0%, transparent 50%);
+    background-attachment: fixed;
+    color: #e2e8f0; 
+}
+        
         
         /* Hormozi Style Cards */
         .product-card { 
@@ -89,7 +108,6 @@
 </head>
 <body class="antialiased pb-20 md:pb-0">
     <!-- Contenedor del Fondo -->
-<div id="vanta-bg" class="fixed inset-0 z-0 opacity-40 pointer-events-none"></div>
 
     <!-- Social Proof Toasts Container -->
     <div id="toast-container" class="fixed bottom-24 left-4 z-40 flex flex-col gap-3 pointer-events-none md:bottom-8 md:left-32"></div>
@@ -138,6 +156,24 @@
             </div>
         </div>
     </nav>
+    <!-- LEAD MAGNET: LISTA VIP (Con botón de cerrar) -->
+<div id="leadMagnetBar" class="bg-gradient-to-r from-orange-600 to-red-600 text-white py-2 px-4 shadow-lg relative z-40 transition-all duration-500">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center md:text-left pr-8">
+        <div class="flex-1">
+            <p class="font-bold text-xs md:text-sm inline-block mr-2"><i class="fas fa-bolt text-yellow-300 animate-pulse"></i> ¿Internet lento?</p>
+            <span class="text-[10px] md:text-xs text-orange-100">Únete a la Lista VIP en WhatsApp y recibe el catálogo PDF semanal.</span>
+        </div>
+        <a href="https://wa.me/5358183649?text=Hola,%20quiero%20unirme%20a%20la%20Lista%20VIP" target="_blank" 
+           class="bg-white text-orange-600 px-4 py-1 rounded-full font-bold text-[10px] uppercase hover:bg-gray-100 transition shadow-md flex items-center gap-2 whitespace-nowrap">
+           <i class="fab fa-whatsapp"></i> Unirme
+        </a>
+    </div>
+    <!-- Botón X para cerrar -->
+    <button onclick="document.getElementById('leadMagnetBar').style.display='none'" class="absolute top-2 right-2 text-white/50 hover:text-white transition p-1">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+</div>
 </div>
 
     <!-- 2. HERO SECTION: Problema (Inflación) -> Solución (Activos Tangibles) -->
@@ -361,6 +397,11 @@
     </div>
 </div>
 <!-- FIN SELECTOR -->
+ /*
+<a id="btnConsult" href="#" target="_blank" class="w-full mb-3 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl border border-gray-600 flex items-center justify-center gap-2 transition text-sm">
+    <i class="fab fa-whatsapp text-green-400 text-lg"></i> Tengo dudas sobre este equipo
+</a>
+*/
                     <button id="btnAddToCart" onclick="addToCart()" class="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center gap-3 transition transform active:scale-95 text-lg uppercase tracking-wide">
                         <i class="fas fa-cart-plus"></i> Agregar al Pedido
                     </button>
@@ -707,27 +748,54 @@
         if(display) display.innerText = currentModalQty;
     }
 
-    // --- CARGA DE DATOS ---
-    Papa.parse(PROXY_URL, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: function(results) {
-            if(results.data.length === 0) { showError("No hay datos."); return; }
-            parseData(results.data);
-            startSocialProof();
-            groupedProducts = Array.from(groupsMap.values());
-        renderCategories();
-        
-        // --- CAMBIO AQUÍ ---
-        // 1. Primero cargamos destacados por defecto
-        showFeaturedProducts(); 
-        document.getElementById('loading').style.display = 'none';
+    // --- CARGA DE DATOS OPTIMIZADA (CACHE LOCAL) ---
+    function loadData() {
+        const CACHE_KEY = 'multistore_data_v1';
+        const CACHE_TIME_KEY = 'multistore_time';
+        const EXPIRY_MS = 3600000; // 1 Hora (ajusta si quieres más tiempo)
 
-        // 2. INMEDIATAMENTE revisamos si hay una orden en la URL
-        checkUrlSearch(); 
-        // -------------------
-        },
-        error: function() { showError("Error de conexión."); }
-    });
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+        const now = new Date().getTime();
+
+        // Si hay datos guardados y no han pasado 60 min, usamos la caché (0 gasto de datos)
+        if (cachedData && cachedTime && (now - cachedTime < EXPIRY_MS)) {
+            console.log("Cargando desde caché local (Ahorro de datos)");
+            parseData(JSON.parse(cachedData));
+            startSocialProof();
+            document.getElementById('loading').style.display = 'none';
+            // Aviso sutil de que son datos guardados
+            showToast("⚡ Cargado instantáneo (Modo Ahorro)");
+        } else {
+            // Si no hay caché o expiró, descargamos de internet
+            console.log("Descargando datos frescos...");
+            Papa.parse(PROXY_URL, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: function(results) {
+                    if(results.data.length === 0) { showError("No hay datos."); return; }
+                    
+                    // Guardamos en el teléfono para la próxima
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(results.data));
+                    localStorage.setItem(CACHE_TIME_KEY, now);
+                    
+                    parseData(results.data);
+                    startSocialProof();
+                },
+                error: function() { 
+                    // Si falla internet pero tenemos caché vieja, úsala como respaldo
+                    if(cachedData) {
+                        showToast("⚠️ Sin conexión. Mostrando datos guardados.");
+                        parseData(JSON.parse(cachedData));
+                    } else {
+                        showError("Error de conexión y no hay datos guardados."); 
+                    }
+                }
+            });
+        }
+    }
+
+    // Iniciamos la carga
+    loadData();
 
     function showError(msg) {
         document.getElementById('loading').style.display = 'none';
@@ -796,6 +864,22 @@
         renderCategories();
         showFeaturedProducts();
         document.getElementById('loading').style.display = 'none';
+        // --- SISTEMA DE NOTIFICACIÓN DE NOVEDADES ---
+        const currentCount = groupedProducts.length;
+        const lastCount = localStorage.getItem('product_count') || 0;
+
+        if (currentCount > lastCount) {
+            // Si hay productos nuevos, mostramos un aviso tipo "Toast"
+            showToast(`🔥 ¡Hay ${currentCount - lastCount} productos nuevos desde tu última visita!`);
+            
+            // Opcional: Poner un punto rojo en el botón de "Lo Nuevo" (si usas la solución 2)
+            // Esto requiere CSS adicional, pero el Toast ya cumple la función.
+        }
+
+        // Guardamos la cantidad actual para la próxima visita
+        localStorage.setItem('product_count', currentCount);
+        // --------------------------------------------
+    
     }
 
     // --- RENDERIZADO (Grid, Categorías - Igual que antes) ---
@@ -806,6 +890,14 @@
         // 1. FILA DE COLECCIONES INTELIGENTES (MARKETING)
         let smartHTML = `<div class="w-full flex flex-wrap justify-center gap-2 mb-3 border-b border-gray-700 pb-3">`;
         smartHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Necesidad</span>`;
+
+         // --- BOTÓN NUEVO: LO ÚLTIMO ---
+        smartHTML += `
+            <button onclick="showNewestProducts()" 
+            class="smart-btn px-4 py-1 rounded-full border border-green-500/50 bg-green-900/20 text-green-300 hover:bg-green-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1 animate-pulse-fast">
+            <i class="fas fa-star"></i> Lo Nuevo
+            </button>`;
+        // -------------------------------
         
         SMART_COLLECTIONS.forEach(col => {
             smartHTML += `
@@ -874,20 +966,46 @@
     function renderGrid(productsList) {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
+
+        // 1. DETECCIÓN DE CONEXIÓN LENTA (Para Cuba)
+        // Detectamos si el navegador dice que está en "Ahorro de datos" o si la conexión es 2G/3G lento
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const isSlow = connection && (connection.saveData || connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
+
         productsList.forEach(group => {
             const v = group.variants[0];
             const card = document.createElement('div');
-            // Obtener color del proveedor para el borde
+            // Obtener color del proveedor
             const sRule = SUPPLIER_RULES[v.supplier] || SUPPLIER_RULES['VP'];
             
             card.className = `product-card rounded-2xl flex flex-col group cursor-pointer animate-slide-in relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-gray-700 hover:border-${sRule.color}-500`;
             card.onclick = () => openProductModal(group.name);
             
+            // 2. DECISIÓN: ¿CARGAMOS FOTO O NO?
+            let imgHTML = '';
+            
+            if (isSlow) {
+                // MODO AHORRO: Mostramos un placeholder liviano (sin gastar megas)
+                imgHTML = `
+                    <div class="w-full h-full bg-gray-800/50 flex flex-col items-center justify-center text-gray-500 p-4 text-center border border-gray-700 rounded-lg">
+                        <i class="fas fa-bolt text-yellow-500 text-xl mb-2 animate-pulse"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Modo Ahorro</span>
+                        <span class="text-[9px] text-gray-500 mt-1">Toca para ver detalles</span>
+                    </div>`;
+            } else {
+                // MODO NORMAL: Cargamos la imagen (con lazy loading por si acaso)
+                imgHTML = `<img src="${v.thumb}" loading="lazy" decoding="async" class="w-full h-full object-contain group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">`;
+            }
+
+            // 3. ARMAMOS LA TARJETA
             card.innerHTML = `
                 <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10">${v.supplier}</div>
+                
+                <!-- Aquí insertamos la variable imgHTML que calculamos arriba -->
                 <div class="product-image-container h-64 p-4 relative bg-gray-800/50">
-                    <img src="${v.thumb}" class="w-full h-full object-contain group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/400x400?text=Error'">
+                    ${imgHTML}
                 </div>
+
                 <div class="p-5 flex-1 flex flex-col border-t border-gray-700 bg-gray-900/80">
                     <h3 class="text-white font-bold text-lg mb-1 line-clamp-2">${group.name}</h3>
                     <div class="mt-auto pt-3 flex justify-between items-center">
@@ -1007,6 +1125,31 @@
         } else {
             document.getElementById('pricePerLb').innerText = '---';
         }
+        function updateModalVariant() {
+        // ... (todo el código que ya tienes dentro de esta función: precios, imágenes, garantías...) ...
+        
+        // ... (después de document.getElementById('pricePerLb').innerText = '---';) ...
+
+        // --- INICIO CÓDIGO VENTA CONSULTIVA ---
+        const btnConsult = document.getElementById('btnConsult');
+        if (btnConsult) {
+            // Construimos el mensaje personalizado
+            let variantText = selectedVariant.color ? ` (${selectedVariant.color})` : '';
+            
+            // Mensaje: "Hola, me interesa el [Producto], pero tengo una duda..."
+            let consultMsg = `👋 Hola, estoy viendo el *${currentGroup.name}${variantText}* en la web ($${selectedVariant.price}).\n\n🤔 Tengo una duda antes de comprar:`;
+            
+            // Si hay un vendedor referido, lo agregamos al mensaje también
+            if(currentAffiliate) {
+                consultMsg += `\n(Referido por: ${currentAffiliate})`;
+            }
+
+            // Actualizamos el enlace del botón
+            btnConsult.href = `https://wa.me/5358183649?text=${encodeURIComponent(consultMsg)}`;
+        }
+        // --- FIN CÓDIGO VENTA CONSULTIVA ---
+
+    } // <--- Esta es la llave de cierre de updateModalVariant
     }
 
     function getShippingText(rule) {
@@ -1472,6 +1615,21 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
         navigator.clipboard.writeText(shareUrl).then(() => {
             showToast(`🔗 Enlace copiado: Envíalo al cliente.`);
         });
+    }
+
+    function showNewestProducts() {
+        // 1. Efectos visuales
+        document.querySelectorAll('.cat-btn, .smart-btn').forEach(btn => btn.classList.remove('active', 'bg-orange-600', 'text-white'));
+        
+        // 2. Lógica: Tomamos el array original, invertimos el orden y sacamos los primeros 20
+        // (Esto asume que lo último que escribiste en el Excel está al final de la lista)
+        const newest = [...groupedProducts].reverse().slice(0, 20);
+
+        // 3. Renderizar
+        renderGrid(newest);
+        document.getElementById('catalog-title').innerHTML = `✨ Últimos Ingresos <span class="text-green-400">(${newest.length})</span>`;
+        document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+        document.getElementById('view-all-container').classList.add('hidden');
     }
 </script>
 
