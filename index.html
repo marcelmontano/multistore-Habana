@@ -307,7 +307,8 @@
             </div>
             
             <!-- Value Stack (Actualizado a "Inversión") -->
-            <div class="flex flex-wrap justify-center gap-4 text-xs md:text-sm text-gray-300 font-bold mb-8">
+            <div class="flex flex-wrap justify-center gap-4 text-xs md:text-sm text-gray-300 font-bold mb-4">
+
                 <span class="bg-gray-800 px-3 py-1 rounded border border-gray-700 hover:border-green-500 transition cursor-default">
                     <i class="fas fa-lock text-green-500 mr-1"></i> Precio Congelado Hoy
                 </span>
@@ -321,7 +322,7 @@
 
             <!-- Filtros de Categoría (Se mantiene igual) -->
              <!-- === NUEVO BOTÓN: ASISTENTE INTELIGENTE === -->
-<div class="flex justify-center mt-6 mb-2 relative z-30">
+<div class="flex justify-center mt-2 mb-2 relative z-30">
     <button onclick="openSmartAssistant()" 
             class="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105 active:scale-95 border border-cyan-400/30 animate-pulse-fast">
         
@@ -344,35 +345,72 @@
         </div>
     </section>
 
-    <section class="py-10 bg-[#0b1120] border-b border-gray-800 relative z-10">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-tech font-bold text-white uppercase tracking-wider">¿Para quién compramos?</h2>
-        </div>
-        <div class="grid md:grid-cols-3 gap-6">
-            <!-- Tarjeta 1 -->
-            <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 hover:border-orange-500 group cursor-pointer transition transform hover:-translate-y-2">
-                <div class="w-14 h-14 bg-orange-500/20 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition"><i class="fas fa-home text-2xl text-orange-500"></i></div>
-                <h3 class="text-white font-bold text-lg text-center mb-1">Mi Hogar</h3>
-                <p class="text-gray-400 text-xs text-center">Equipar mi casa con splits, neveras y confort.</p>
-            </div>
-            <!-- Tarjeta 2 -->
-            <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 hover:border-blue-500 group cursor-pointer transition transform hover:-translate-y-2">
-                <div class="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition"><i class="fas fa-tools text-2xl text-blue-500"></i></div>
-                <h3 class="text-white font-bold text-lg text-center mb-1">Negocio / Taller</h3>
-                <p class="text-gray-400 text-xs text-center">Herramientas profesionales e insumos.</p>
-            </div>
-            <!-- Tarjeta 3 -->
-            <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 hover:border-green-500 group cursor-pointer transition transform hover:-translate-y-2">
-                <div class="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition"><i class="fas fa-box-open text-2xl text-green-500"></i></div>
-                <h3 class="text-white font-bold text-lg text-center mb-1">Revendedor</h3>
-                <p class="text-gray-400 text-xs text-center">Precios especiales por volumen.</p>
-            </div>
-        </div>
-    </div>
-</section>
+    
 
+<!-- SECCIÓN DE CONFIANZA: CÓMO COMPRAR (3 PASOS) -->
+    <section class="bg-[#0f172a] py-10 border-b border-gray-800 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4">
+            
+            <!-- Título que ataca la objeción principal -->
+            <div class="text-center mb-8">
+                <span class="inline-block py-1 px-3 rounded-full bg-green-900/30 border border-green-500/50 text-green-400 text-[10px] font-bold uppercase tracking-widest mb-2 animate-pulse">
+                    <i class="fas fa-shield-alt"></i> Compra Segura Habana
+                </span>
+                <h2 class="text-2xl md:text-3xl font-black text-white">
+                    ¿Cómo funciona? <span class="text-gray-500 text-lg md:text-xl font-medium block mt-1">(Sin letras pequeñas)</span>
+                </h2>
+            </div>
 
+            <!-- Los 3 Pasos -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                
+                <!-- PASO 1: PEDIDO -->
+                <div class="bg-gray-800/40 border border-gray-700 p-5 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:bg-gray-800 transition">
+                    <div class="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center text-blue-400 font-black text-xl border border-blue-500/30 shrink-0 group-hover:scale-110 transition">
+                        1
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm uppercase">Pides el Equipo</h3>
+                        <p class="text-gray-400 text-xs mt-1 leading-relaxed">
+                            Agregas al carrito o nos escribes por WhatsApp para confirmar que hay stock hoy.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- PASO 2: ENTREGA -->
+                <div class="bg-gray-800/40 border border-gray-700 p-5 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:bg-gray-800 transition">
+                    <div class="w-12 h-12 bg-yellow-600/20 rounded-full flex items-center justify-center text-yellow-400 font-black text-xl border border-yellow-500/30 shrink-0 group-hover:scale-110 transition">
+                        2
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm uppercase">Te lo llevamos</h3>
+                        <p class="text-gray-400 text-xs mt-1 leading-relaxed">
+                            El transporte va hasta tu puerta. <strong class="text-white">Abres la caja y revisas</strong> que todo esté nuevo y sellado.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- PASO 3: PAGO (El Cierre) -->
+                <div class="bg-gradient-to-r from-gray-800 to-gray-900 border-2 border-green-500/50 p-5 rounded-2xl flex items-center gap-4 relative overflow-hidden shadow-[0_0_25px_rgba(34,197,94,0.15)] transform md:scale-105">
+                    <!-- Badge Flotante -->
+                    <div class="absolute top-0 right-0 bg-green-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+                        GARANTÍA
+                    </div>
+                    
+                    <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-black text-xl shadow-lg shrink-0 animate-bounce">
+                        <i class="fas fa-hand-holding-dollar"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm uppercase">Pagas al Final</h3>
+                        <p class="text-gray-300 text-xs mt-1 leading-relaxed">
+                            Solo pagas cuando tienes el producto en la mano y estás conforme. <span class="text-green-400 font-bold underline">Cero riesgo para ti.</span>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
 
     <!-- 3. CATALOGO: Magic Naming & Urgency -->
     <section id="catalog" class="py-10 bg-[#0b1120] min-h-screen border-t border-gray-800">
@@ -1007,11 +1045,30 @@ setTimeout(() => {
     }
 
     // --- UTILIDADES ---
+
     function cleanImageUrl(cellData) {
         if (!cellData) return null;
         const match = cellData.trim().match(/https?:\/\/[^"\s\)]+/);
         return match ? match[0] : (cellData.startsWith('http') ? cellData.trim() : null);
     }
+    // --- OPTIMIZADOR DE IMÁGENES IMGUR ---
+function getOptimizedImgurUrl(url, size) {
+    if (!url || !url.includes('imgur.com')) return url; 
+    const extension = url.substring(url.lastIndexOf('.'));
+    let baseUrl = url.substring(0, url.lastIndexOf('.'));
+    
+    // Limpieza básica de sufijos anteriores si ya existían
+    if(baseUrl.endsWith('m') || baseUrl.endsWith('l') || baseUrl.endsWith('h')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+    }
+    
+    let suffix = '';
+    if (size === 'list') suffix = 'm';   // Pequeña
+    if (size === 'modal') suffix = 'l';  // Mediana/Grande
+    if (size === 'zoom') suffix = 'h';   // Enorme
+    
+    return baseUrl + suffix + extension;
+}
 
     function parsePrice(priceStr) {
         if(!priceStr) return 0;
@@ -1278,6 +1335,7 @@ setTimeout(() => {
     }
 
     // --- RENDERIZADO DE PRODUCTOS (GRID vs LISTA) ---
+    // --- RENDERIZADO DE PRODUCTOS (GRID vs LISTA) ---
     function renderGrid(productsList) {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
@@ -1286,19 +1344,15 @@ setTimeout(() => {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         const isSlowNetwork = connection && (connection.saveData || connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
         
-        // Usamos la variable global isLiteMode (del botón) o la detección de red
         const useListView = isLiteMode || isSlowNetwork;
 
-        // 1. CAMBIO DE ESTRUCTURA DEL CONTENEDOR
         if (useListView) {
-            // Modo Lista: Una sola columna, ancho limitado para lectura fácil
             grid.className = "flex flex-col gap-3 max-w-3xl mx-auto w-full"; 
         } else {
-            // Modo Grid: Rejilla responsiva original
             grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
         }
 
-        productsList.forEach(group => {
+        productsList.forEach((group, index) => { // <--- MANTENEMOS EL INDEX PARA VELOCIDAD
             const v = group.variants[0];
             const sRule = SUPPLIER_RULES[v.supplier] || SUPPLIER_RULES['VP'];
             
@@ -1306,19 +1360,21 @@ setTimeout(() => {
             let stockNum = v.stock;
             let isSoldOut = stockNum === 0;
 
+            // --- OPTIMIZACIÓN DE IMAGEN ---
+            // 1. Las primeras 8 cargan rápido (eager), el resto espera (lazy)
+            const loadingMode = index < 8 ? 'eager' : 'lazy';
+            // 2. Pedimos la versión PEQUEÑA ('list' = sufijo m) para el catálogo
+            const optimizedThumb = getOptimizedImgurUrl(v.thumb, 'list'); 
+
             const card = document.createElement('div');
             card.onclick = () => openProductModal(group.name);
 
             // --- DISEÑO A: MODO LISTA (LITE / AHORRO) ---
             if (useListView) {
-                // Estilo de fila compacta
                 let rowClass = "w-full bg-gray-800/90 border border-gray-700 rounded-lg p-3 flex items-center justify-between gap-3 cursor-pointer transition animate-slide-in group hover:border-orange-500 hover:bg-gray-800";
-                
                 if (isSoldOut) rowClass += " opacity-60 grayscale";
-
                 card.className = rowClass;
                 
-                // Icono según categoría (Decorativo simple)
                 let icon = "fa-box";
                 if(group.category.toLowerCase().includes('split')) icon = "fa-wind";
                 if(group.category.toLowerCase().includes('moto')) icon = "fa-motorcycle";
@@ -1326,12 +1382,9 @@ setTimeout(() => {
 
                 card.innerHTML = `
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <!-- Icono Pequeño -->
                         <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 group-hover:text-orange-500 group-hover:bg-gray-700/50 transition shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
-                        
-                        <!-- Info Texto -->
                         <div class="flex flex-col min-w-0">
                             <h4 class="text-white font-bold text-sm truncate pr-2">${group.name}</h4>
                             <div class="flex items-center gap-2 text-[10px] text-gray-400">
@@ -1343,8 +1396,6 @@ setTimeout(() => {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Precio y Flecha -->
                     <div class="text-right shrink-0">
                         <div class="text-white font-black text-lg leading-none">$${formatPrice(v.price)}</div>
                         <div class="text-[9px] text-orange-500 group-hover:underline mt-1">Ver detalles <i class="fas fa-chevron-right ml-1"></i></div>
@@ -1360,8 +1411,10 @@ setTimeout(() => {
 
                 card.className = cardClasses;
 
-                let imgHTML = `<img src="${v.thumb}" loading="lazy" decoding="async" class="w-full h-full object-contain group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">`;
+                // IMAGEN OPTIMIZADA
+                let imgHTML = `<img src="${optimizedThumb}" loading="${loadingMode}" decoding="async" class="w-full h-full object-contain group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">`;
 
+                // BADGE DE STOCK
                 let stockBadge = '';
                 if (isSoldOut) {
                     stockBadge = `
@@ -1377,6 +1430,7 @@ setTimeout(() => {
                      stockBadge = `<div class="absolute bottom-2 left-2 bg-green-900/80 text-green-400 text-[9px] font-bold px-2 py-1 rounded shadow z-20 border border-green-500/30"><i class="fas fa-check-circle"></i> Disponible</div>`;
                 }
 
+                // --- AQUÍ ESTÁ EL CAMBIO: VOLVEMOS AL BOTÓN DE CARRITO (+) ---
                 card.innerHTML = `
                     <div class="product-image-container h-64 p-4 relative bg-gray-800/50 flex items-center justify-center">
                         ${imgHTML}
@@ -1386,7 +1440,10 @@ setTimeout(() => {
                         <h3 class="text-white font-bold text-lg mb-1 line-clamp-2">${group.name}</h3>
                         <div class="mt-auto pt-3 flex justify-between items-center">
                             <span class="text-xl font-black text-white ${isSoldOut ? 'text-gray-500 line-through' : ''}">$${formatPrice(v.price)}</span>
-                            ${isSoldOut ? '<span class="text-[10px] text-red-500 font-bold uppercase">No Disponible</span>' : '<button class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white"><i class="fas fa-plus"></i></button>'}
+                            ${isSoldOut 
+                                ? '<span class="text-[10px] text-red-500 font-bold uppercase">No Disponible</span>' 
+                                : '<button class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition"><i class="fas fa-cart-plus"></i></button>'
+                            }
                         </div>
                     </div>`;
             }
@@ -1420,11 +1477,18 @@ setTimeout(() => {
         document.getElementById('modalCat').innerText = currentGroup.category;
         
         // Gallery logic (simplificada)
-        const thumbContainer = document.getElementById('modalThumbnails');
-        thumbContainer.innerHTML = '';
-        currentGroup.gallery.forEach(img => {
-            thumbContainer.innerHTML += `<img src="${img}" onclick="document.getElementById('modalMainImg').src='${img}'" class="w-16 h-16 object-contain border border-gray-600 rounded cursor-pointer">`;
-        });
+        // CÓDIGO NUEVO (OPTIMIZADO):
+const thumbContainer = document.getElementById('modalThumbnails');
+thumbContainer.innerHTML = '';
+// === AQUÍ ESTÁ EL CAMBIO OPTIMIZADO ===
+currentGroup.gallery.forEach(img => {
+    // Miniatura ligera (m)
+    let miniThumb = getOptimizedImgurUrl(img, 'list');
+    // Imagen grande al hacer clic (l)
+    let fullRes = getOptimizedImgurUrl(img, 'modal');
+    
+    thumbContainer.innerHTML += `<img src="${miniThumb}" onclick="document.getElementById('modalMainImg').src='${fullRes}'" class="w-16 h-16 object-contain border border-gray-600 rounded cursor-pointer transition hover:border-orange-500">`;
+});
 
         updateModalVariant();
         document.getElementById('productModal').classList.remove('hidden');
@@ -1444,6 +1508,9 @@ setTimeout(() => {
                 <i class="fas fa-link"></i>
             </button>
         `;
+        // === AQUÍ ESTÁ EL CAMBIO OPTIMIZADO ===
+// Cargamos versión "modal" (l) que es HD pero ligera
+document.getElementById('modalMainImg').src = getOptimizedImgurUrl(selectedVariant.thumb, 'modal');
         // --- CONTADOR DE VISITAS (URGENCIA) ---
         // Genera número entre 5 y 25
         const viewers = Math.floor(Math.random() * (25 - 5 + 1)) + 5;
@@ -1496,7 +1563,9 @@ setTimeout(() => {
         }
 
         // 3. ACTUALIZAR DOM BÁSICO
-        document.getElementById('modalMainImg').src = selectedVariant.thumb;
+        // CÓDIGO NUEVO (OPTIMIZADO):
+// Cargamos la versión 'modal' (Grande ~640px, sufijo l) en lugar de la original gigante
+document.getElementById('modalMainImg').src = getOptimizedImgurUrl(selectedVariant.thumb, 'modal');
         //document.getElementById('modalPrice').innerText = '$' + formatPrice(selectedVariant.price);
         currentCurrencyMode = 'USD'; // Reseteamos a USD siempre que se abre un producto nuevo
         updatePriceDisplay();        // Llamamos a la calculadora para que pinte el precio
@@ -2477,6 +2546,14 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
 <!-- SCRIPT PARA GENERAR TARJETAS LOGÍSTICAS -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // --- LÓGICA AUTO-LITE PARA CUBA ---
+    // Si la pantalla es pequeña (<420px) y no ha elegido antes, activamos modo ahorro
+    if (window.innerWidth < 420 && localStorage.getItem('multistore_lite') === null) {
+        isLiteMode = true;
+        localStorage.setItem('multistore_lite', 'true');
+    }
+    
+    applyLiteMode();
         const grid = document.getElementById('logistics-grid');
         if(!grid) return;
         
