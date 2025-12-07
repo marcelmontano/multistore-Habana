@@ -781,14 +781,17 @@ function applyLiteMode() {
         document.getElementById('liteModeBtn').classList.remove('bg-yellow-900', 'border-yellow-500', 'text-white');
     }
 }
-// --- LÓGICA DE LA BURBUJA EXPLICATIVA ---
-    
-    // 1. Mostrar burbuja 2 segundos después de entrar (si no la ha visto antes)
-    setTimeout(() => {
-        if (!localStorage.getItem('multistore_tooltip_seen')) {
-            document.getElementById('liteTooltip').classList.remove('hidden');
-        }
-    }, 2000);
+// // --- LÓGICA DE LA BURBUJA EXPLICATIVA (INTELIGENTE) ---
+setTimeout(() => {
+    // Detectar conexión
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const isSlow = connection && (connection.saveData || connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
+
+    // Solo mostrar si no la ha visto Y la conexión es lenta
+    if (!localStorage.getItem('multistore_tooltip_seen') && isSlow) {
+        document.getElementById('liteTooltip').classList.remove('hidden');
+    }
+}, 3000);
 
     // 2. Función para cerrar la burbuja
     function dismissLiteTooltip() {
@@ -1341,7 +1344,6 @@ function applyLiteMode() {
                 }
 
                 card.innerHTML = `
-                    <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10 shadow-md">${v.supplier}</div>
                     <div class="product-image-container h-64 p-4 relative bg-gray-800/50 flex items-center justify-center">
                         ${imgHTML}
                         ${stockBadge}
@@ -1407,6 +1409,27 @@ function applyLiteMode() {
             <button onclick="copyProductLink('${cleanName.replace(/'/g, "\\'")}')" class="ml-2 text-sm text-gray-500 hover:text-orange-500 transition align-middle" title="Copiar enlace">
                 <i class="fas fa-link"></i>
             </button>
+        `;
+        // --- CONTADOR DE VISITAS (URGENCIA) ---
+        // Genera número entre 5 y 25
+        const viewers = Math.floor(Math.random() * (25 - 5 + 1)) + 5;
+        
+        // Buscamos si ya existe el contador para no duplicarlo
+        let viewerEl = document.getElementById('liveViewers');
+        if (!viewerEl) {
+            viewerEl = document.createElement('div');
+            viewerEl.id = 'liveViewers';
+            // Lo insertamos después del título
+            titleEl.parentNode.insertBefore(viewerEl, titleEl.nextSibling);
+        }
+        
+        viewerEl.className = "flex items-center gap-2 mt-1 mb-2 animate-pulse";
+        viewerEl.innerHTML = `
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span class="text-red-400 text-xs font-bold font-mono">${viewers} personas viendo este producto</span>
         `;
         
         // 1. OBTENER REGLAS PROVEEDOR
@@ -1576,25 +1599,48 @@ if (nameLower.includes('split') || nameLower.includes('nevera')) {
 // o usar append como hicimos antes).
 
     } // <--- Esta es la llave de cierre de updateModalVariant
-    // --- LÓGICA DE PROTECCIÓN DE STOCK ---
+    // --- LÓGICA DE STOCK Y ALERTA WHATSAPP ---
         const btnAdd = document.getElementById('btnAddToCart');
-        const qtySelector = document.getElementById('modalQtyDisplay').parentElement; // El contenedor de + -
+        const qtySelector = document.getElementById('modalQtyDisplay').parentElement; 
         
+        // Limpiamos botón de alerta previo si existe
+        const oldAlertBtn = document.getElementById('restockAlertBtn');
+        if(oldAlertBtn) oldAlertBtn.remove();
+        
+        // Restauramos visibilidad del botón original por defecto
+        btnAdd.style.display = 'flex';
+
         if (selectedVariant.stock === 0) {
-            // ESTADO: AGOTADO
-            btnAdd.disabled = true;
-            btnAdd.innerHTML = `<i class="fas fa-ban"></i> PRODUCTO AGOTADO`;
-            btnAdd.className = "w-full bg-gray-700 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed border border-gray-600 flex items-center justify-center gap-3";
+            // ESTADO: AGOTADO -> MODO ALERTA
             
-            // Ocultar selector de cantidad
+            // 1. Ocultar controles de compra normales
+            btnAdd.style.display = 'none'; 
             if(qtySelector) qtySelector.style.visibility = 'hidden';
             
+            // 2. Crear botón de Aviso por WhatsApp
+            const alertBtn = document.createElement('a');
+            alertBtn.id = 'restockAlertBtn';
+            alertBtn.target = "_blank";
+            
+            // Mensaje predefinido
+            const msg = `Hola, veo que el *${currentGroup.name}* está agotado. Por favor, avísame a este número cuando vuelva a entrar. 🔔`;
+            alertBtn.href = `https://wa.me/5358183649?text=${encodeURIComponent(msg)}`;
+            
+            alertBtn.className = "w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 rounded-xl border border-gray-600 flex items-center justify-center gap-3 transition shadow-lg group";
+            alertBtn.innerHTML = `
+                <i class="fab fa-whatsapp text-green-500 text-xl group-hover:scale-110 transition"></i> 
+                <span>Avísame cuando llegue</span>
+            `;
+            
+            // Insertar donde estaba el botón de compra
+            btnAdd.parentNode.insertBefore(alertBtn, btnAdd);
+
             // Ocultar botón de "Comprados Juntos" si existiera
             const crossSell = document.getElementById('dynamicCrossSell');
             if(crossSell) crossSell.style.display = 'none';
 
         } else {
-            // ESTADO: DISPONIBLE (Restaurar)
+            // ESTADO: DISPONIBLE (Restaurar normalidad)
             btnAdd.disabled = false;
             btnAdd.innerHTML = `<i class="fas fa-cart-plus"></i> Agregar al Pedido`;
             btnAdd.className = "w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center gap-3 transition transform active:scale-95 text-lg uppercase tracking-wide";
@@ -2411,7 +2457,6 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
     }
 
     card.innerHTML = `
-        <div class="absolute top-2 right-2 bg-${sRule.color}-600 text-white text-[9px] font-bold px-2 py-1 rounded z-10 shadow-md">${v.supplier}</div>
         
         <!-- CONTENEDOR DE IMAGEN (Ahora soporta Lite Mode via CSS) -->
         <div class="product-image-container h-64 p-4 relative bg-gray-800/50 flex items-center justify-center overflow-hidden">
