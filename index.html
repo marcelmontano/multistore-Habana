@@ -130,6 +130,21 @@
 }
 .lite-placeholder { display: none; }
 .lite-mode .lite-placeholder { display: flex; flex-direction: column; align-items: center; color: #64748b; }
+/* --- OPTIMIZACIÓN MÓVIL EXTREMA --- */
+    @media (max-width: 768px) {
+        /* Desactivar animaciones decorativas en móvil */
+        .animate-slide-in, .animate-pulse, .animate-fade-in, .animate-bounce, .group-hover\:scale-110 {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+        }
+        
+        /* Mantener solo lo vital (Spinners y Modales) */
+        .loader { animation: spin 1s linear infinite !important; }
+        
+        /* Fondo plano en móvil (Ahorra mucha batería) */
+        body { background-image: none !important; background-color: #0f172a !important; }
+    }
     </style>
 </head>
     </style>
@@ -242,17 +257,36 @@
                 <i class="fas fa-shield-alt mr-2"></i> Protege tu Patrimonio Familiar
             </div>
             
-            <!-- Titular Agresivo (Hormozi Style) -->
-            <h1 class="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
-                Tu dinero vale menos mañana.<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">ESTOS ACTIVOS VALEN MÁS.</span>
-            </h1>
+            <!-- Titular Corto y Directo -->
+<h1 class="text-3xl md:text-6xl font-black text-white mb-4 leading-tight tracking-tight">
+    Protege tu dinero.<br>
+    <span class="text-orange-500">COMPRA ACTIVOS HOY.</span>
+</h1>
             
-            <!-- Subtítulo: Lógica de Inversión -->
-            <p class="text-gray-400 max-w-2xl mx-auto text-lg mb-8">
-                No ahorres en papel que se devalúa. Convierte tu capital en <strong>bienes duraderos</strong> (Splits, Neveras, Plantas) que mantienen su utilidad y valor en el tiempo.
-                <span class="text-gray-300 block mt-2 font-medium">La mejor "cuenta de ahorro" en La Habana es tu casa equipada.</span>
-            </p>
+            <!-- Subtítulo Simplificado -->
+<p class="text-gray-400 max-w-xl mx-auto text-sm md:text-lg mb-6">
+    Splits, Neveras y Plantas con entrega en La Habana.
+    <span class="text-gray-300 block mt-1 font-medium">Stock Real. Precio Fijo.</span>
+</p>
+<!-- === NUEVO BOTÓN DE ACCIÓN MASIVA (ESTRATEGIA WHATSAPP) === -->
+<div class="flex justify-center mb-8 relative z-40">
+    <a href="https://wa.me/5358183649?text=Hola,%20quiero%20ver%20la%20disponibilidad%20del%20almacén%20hoy." target="_blank" 
+       class="group relative inline-flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black py-4 px-8 rounded-full shadow-[0_0_30px_rgba(37,211,102,0.4)] transition-all transform hover:scale-105 active:scale-95 border-2 border-white/20 animate-pulse-fast text-lg md:text-xl uppercase tracking-wide">
+        
+        <!-- Icono WhatsApp animado -->
+        <i class="fab fa-whatsapp text-3xl group-hover:rotate-12 transition"></i>
+        
+        <div class="flex flex-col items-start leading-none">
+            <span class="text-[10px] text-green-100 font-bold mb-0.5 tracking-widest">ATENCIÓN INMEDIATA</span>
+            <span>VER DISPONIBILIDAD AHORA</span>
+        </div>
+        
+        <!-- Flecha -->
+        <div class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center ml-2">
+            <i class="fas fa-chevron-right text-sm"></i>
+        </div>
+    </a>
+</div>
 
             <!-- BUSCADOR CON GENERADOR DE ENLACE -->
             <div class="max-w-xl mx-auto mb-8 relative group z-30">
@@ -1599,60 +1633,80 @@ if (nameLower.includes('split') || nameLower.includes('nevera')) {
 // o usar append como hicimos antes).
 
     } // <--- Esta es la llave de cierre de updateModalVariant
-    // --- LÓGICA DE STOCK Y ALERTA WHATSAPP ---
-        const btnAdd = document.getElementById('btnAddToCart');
-        const qtySelector = document.getElementById('modalQtyDisplay').parentElement; 
+    // --- LÓGICA DE STOCK Y ALERTA WHATSAPP (ESTRATEGIA HÍBRIDA) ---
+    const btnAdd = document.getElementById('btnAddToCart');
+    const qtySelector = document.getElementById('modalQtyDisplay').parentElement; 
+    
+    // 1. LIMPIEZA: Borramos botones dinámicos anteriores para que no se dupliquen
+    const oldAlertBtn = document.getElementById('restockAlertBtn');
+    if(oldAlertBtn) oldAlertBtn.remove();
+    
+    const oldConsultBtn = document.getElementById('btnConsult');
+    if(oldConsultBtn) oldConsultBtn.remove();
+    
+    // Restauramos visibilidad inicial
+    btnAdd.style.display = 'flex';
+
+    if (selectedVariant.stock === 0) {
+        // CASO A: AGOTADO -> MODO ALERTA (Solo WhatsApp aviso)
         
-        // Limpiamos botón de alerta previo si existe
-        const oldAlertBtn = document.getElementById('restockAlertBtn');
-        if(oldAlertBtn) oldAlertBtn.remove();
+        btnAdd.style.display = 'none'; 
+        if(qtySelector) qtySelector.style.visibility = 'hidden';
         
-        // Restauramos visibilidad del botón original por defecto
-        btnAdd.style.display = 'flex';
+        const alertBtn = document.createElement('a');
+        alertBtn.id = 'restockAlertBtn';
+        alertBtn.target = "_blank";
+        
+        const msg = `Hola, veo que el *${currentGroup.name}* está agotado. Por favor, avísame a este número cuando vuelva a entrar. 🔔`;
+        alertBtn.href = `https://wa.me/5358183649?text=${encodeURIComponent(msg)}`;
+        
+        alertBtn.className = "w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 rounded-xl border border-gray-600 flex items-center justify-center gap-3 transition shadow-lg group";
+        alertBtn.innerHTML = `
+            <i class="fab fa-whatsapp text-green-500 text-xl group-hover:scale-110 transition"></i> 
+            <span>Avísame cuando llegue</span>
+        `;
+        
+        btnAdd.parentNode.insertBefore(alertBtn, btnAdd);
 
-        if (selectedVariant.stock === 0) {
-            // ESTADO: AGOTADO -> MODO ALERTA
-            
-            // 1. Ocultar controles de compra normales
-            btnAdd.style.display = 'none'; 
-            if(qtySelector) qtySelector.style.visibility = 'hidden';
-            
-            // 2. Crear botón de Aviso por WhatsApp
-            const alertBtn = document.createElement('a');
-            alertBtn.id = 'restockAlertBtn';
-            alertBtn.target = "_blank";
-            
-            // Mensaje predefinido
-            const msg = `Hola, veo que el *${currentGroup.name}* está agotado. Por favor, avísame a este número cuando vuelva a entrar. 🔔`;
-            alertBtn.href = `https://wa.me/5358183649?text=${encodeURIComponent(msg)}`;
-            
-            alertBtn.className = "w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 rounded-xl border border-gray-600 flex items-center justify-center gap-3 transition shadow-lg group";
-            alertBtn.innerHTML = `
-                <i class="fab fa-whatsapp text-green-500 text-xl group-hover:scale-110 transition"></i> 
-                <span>Avísame cuando llegue</span>
-            `;
-            
-            // Insertar donde estaba el botón de compra
-            btnAdd.parentNode.insertBefore(alertBtn, btnAdd);
+        // Ocultar cross-sell si está agotado
+        const crossSell = document.getElementById('dynamicCrossSell');
+        if(crossSell) crossSell.style.display = 'none';
 
-            // Ocultar botón de "Comprados Juntos" si existiera
-            const crossSell = document.getElementById('dynamicCrossSell');
-            if(crossSell) crossSell.style.display = 'none';
-
-        } else {
-            // ESTADO: DISPONIBLE (Restaurar normalidad)
-            btnAdd.disabled = false;
-            btnAdd.innerHTML = `<i class="fas fa-cart-plus"></i> Agregar al Pedido`;
-            btnAdd.className = "w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center gap-3 transition transform active:scale-95 text-lg uppercase tracking-wide";
-            
-            if(qtySelector) qtySelector.style.visibility = 'visible';
-            
-            // Alerta de Urgencia en el botón
-            if (selectedVariant.stock <= 3) {
-                 btnAdd.innerHTML += ` <span class="text-[10px] bg-white text-orange-600 px-1 rounded ml-1 animate-pulse">¡Últimos ${selectedVariant.stock}!</span>`;
-            }
+    } else {
+        // CASO B: DISPONIBLE -> ESTRATEGIA HÍBRIDA (Pedido + Duda)
+        
+        // 1. Configurar Botón Principal (Carrito / Pedido Formal)
+        btnAdd.disabled = false;
+        if(qtySelector) qtySelector.style.visibility = 'visible';
+        
+        // Texto persuasivo para iniciar el proceso formal
+        btnAdd.innerHTML = `<i class="fas fa-clipboard-check"></i> Iniciar Pedido (Paso 1)`;
+        btnAdd.className = "w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center gap-3 transition transform active:scale-95 text-lg uppercase tracking-wide relative z-10";
+        
+        // Alerta visual si queda poco stock
+        if (selectedVariant.stock <= 3) {
+             btnAdd.innerHTML += ` <span class="text-[10px] bg-white text-orange-600 px-1 rounded ml-1 animate-pulse">¡Últimos ${selectedVariant.stock}!</span>`;
         }
+
+        // 2. Crear Botón Secundario (Duda / WhatsApp Directo)
+        const consultBtn = document.createElement('a');
+        consultBtn.id = 'btnConsult';
+        consultBtn.target = "_blank";
+        
+        // Mensaje: Incluye nombre, precio y referido si existe
+        let consultMsg = `👋 Hola, estoy viendo el *${currentGroup.name}* ($${selectedVariant.price}) en la web, pero tengo una duda antes de pedirlo...`;
+        if(currentAffiliate) consultMsg += ` (Ref: ${currentAffiliate})`;
+        
+        consultBtn.href = `https://wa.me/5358183649?text=${encodeURIComponent(consultMsg)}`;
+        
+        // Estilo: Sutil, debajo del botón principal
+        consultBtn.className = "mt-3 w-full text-center text-gray-400 hover:text-white text-sm py-2 border border-transparent hover:border-gray-600 rounded-lg transition cursor-pointer flex items-center justify-center gap-2 select-none";
+        consultBtn.innerHTML = `<i class="far fa-comment-dots text-green-500"></i> No estoy seguro, prefiero preguntar primero`;
+
+        // Insertar DEBAJO del botón de carrito
+        btnAdd.parentNode.insertBefore(consultBtn, btnAdd.nextSibling);
     }
+}
 
     function getShippingText(rule) {
         if(rule.shippingRule === 'fixed_item') return "Tarifa fija por producto ($4 - $15)";
