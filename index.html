@@ -1231,45 +1231,42 @@ function getOptimizedImgurUrl(url, size) {
 
     // --- RENDERIZADO (Grid, Categorías - Igual que antes) ---
     function renderCategories() {
-        const container = document.getElementById('category-filters-hero');
-        container.innerHTML = '';
-        
-        // 1. FILA DE COLECCIONES INTELIGENTES (MARKETING)
-        let smartHTML = `<div class="w-full flex flex-wrap justify-center gap-2 mb-3 border-b border-gray-700 pb-3">`;
-        smartHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Necesidad</span>`;
+    const container = document.getElementById('category-filters-hero');
+    container.innerHTML = '';
+    
+    // 1. FILA DE COLECCIONES INTELIGENTES (MARKETING)
+    let smartHTML = `<div class="w-full flex flex-wrap justify-center gap-2 mb-3 border-b border-gray-700 pb-3">`;
+    smartHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Necesidad</span>`;
 
-         // --- BOTÓN NUEVO: LO ÚLTIMO ---
+    // --- CORRECCIÓN AQUÍ: Agregamos (event) para poder cambiar el color del botón ---
+    smartHTML += `
+        <button onclick="showNewestProducts(event)" 
+        class="smart-btn px-4 py-1 rounded-full border border-green-500/50 bg-green-900/20 text-green-300 hover:bg-green-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1 animate-pulse-fast">
+        <i class="fas fa-star"></i> Lo Nuevo
+        </button>`;
+    
+    SMART_COLLECTIONS.forEach(col => {
         smartHTML += `
-            <button onclick="showNewestProducts()" 
-            class="smart-btn px-4 py-1 rounded-full border border-green-500/50 bg-green-900/20 text-green-300 hover:bg-green-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1 animate-pulse-fast">
-            <i class="fas fa-star"></i> Lo Nuevo
+            <button onclick="filterByCollection('${col.id}')" 
+            class="smart-btn px-4 py-1 rounded-full border border-orange-500/30 bg-orange-900/10 text-orange-200 hover:bg-orange-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1">
+            ${col.label}
             </button>`;
-        // -------------------------------
-        
-        SMART_COLLECTIONS.forEach(col => {
-            smartHTML += `
-                <button onclick="filterByCollection('${col.id}')" 
-                class="smart-btn px-4 py-1 rounded-full border border-orange-500/30 bg-orange-900/10 text-orange-200 hover:bg-orange-600 hover:text-white transition text-[10px] font-bold uppercase flex items-center gap-1">
-                ${col.label}
-                </button>`;
-        });
-        smartHTML += `</div>`;
-        container.innerHTML += smartHTML;
+    });
+    smartHTML += `</div>`;
+    container.innerHTML += smartHTML;
 
-        // 2. FILA DE CATEGORÍAS DEL EXCEL (ORIGINALES)
-        let catHTML = `<div class="w-full flex flex-wrap justify-center gap-2">`;
-        catHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Catálogo</span>`;
-        
-        // Botón "Todo"
-        catHTML += `<button onclick="showFullCatalog('all')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">Ver Todo</button>`;
-        
-        // Botones dinámicos del Excel
-        categories.forEach(cat => {
-            catHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">${cat}</button>`;
-        });
-        catHTML += `</div>`;
-        container.innerHTML += catHTML;
-    }
+    // 2. FILA DE CATEGORÍAS DEL EXCEL
+    let catHTML = `<div class="w-full flex flex-wrap justify-center gap-2">`;
+    catHTML += `<span class="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Por Catálogo</span>`;
+    
+    catHTML += `<button onclick="showFullCatalog('all')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">Ver Todo</button>`;
+    
+    categories.forEach(cat => {
+        catHTML += `<button onclick="showFullCatalog('${cat}')" class="cat-btn px-4 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-400 hover:border-white hover:text-white transition text-[10px] font-bold uppercase">${cat}</button>`;
+    });
+    catHTML += `</div>`;
+    container.innerHTML += catHTML;
+}
 
 
 
@@ -2327,20 +2324,45 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
         });
     }
 
-    function showNewestProducts() {
-        // 1. Efectos visuales
-        document.querySelectorAll('.cat-btn, .smart-btn').forEach(btn => btn.classList.remove('active', 'bg-orange-600', 'text-white'));
-        
-        // 2. Lógica: Tomamos el array original, invertimos el orden y sacamos los primeros 20
-        // (Esto asume que lo último que escribiste en el Excel está al final de la lista)
-        const newest = [...groupedProducts].reverse().slice(0, 20);
+    function showNewestProducts(e) {
+    // 1. Limpiar buscador si había algo escrito
+    document.getElementById('searchInput').value = '';
 
-        // 3. Renderizar
-        renderGrid(newest);
-        document.getElementById('catalog-title').innerHTML = `✨ Últimos Ingresos <span class="text-green-400">(${newest.length})</span>`;
-        document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
-        document.getElementById('view-all-container').classList.add('hidden');
+    // 2. Efectos visuales (Apagar otros botones y encender este)
+    document.querySelectorAll('.cat-btn, .smart-btn').forEach(btn => 
+        btn.classList.remove('active', 'bg-orange-600', 'text-white', 'bg-green-600')
+    );
+    
+    // Si pasamos el evento (click), encendemos el botón actual
+    if(e && e.currentTarget) {
+        e.currentTarget.classList.remove('text-green-300', 'bg-green-900/20');
+        e.currentTarget.classList.add('active', 'bg-green-600', 'text-white', 'shadow-lg');
     }
+
+    // 3. Lógica SUPERIOR: Ordenar por ID de fila (El número de fila del Excel)
+    // Esto asegura que lo último que añadiste al archivo salga primero,
+    // aunque hayas ordenado el Excel alfabéticamente antes.
+    const newest = [...groupedProducts].sort((a, b) => {
+        // Obtenemos el ID de la primera variante de cada grupo
+        const idA = a.variants[0].id; 
+        const idB = b.variants[0].id;
+        return idB - idA; // Orden descendente (Mayor ID primero)
+    }).slice(0, 20);
+
+    // 4. Renderizar
+    renderGrid(newest);
+    document.getElementById('catalog-title').innerHTML = `✨ Últimos Ingresos <span class="text-green-400">(${newest.length})</span>`;
+    
+    // 5. Bajar la pantalla al catálogo suavemente
+    document.getElementById('catalog').scrollIntoView({behavior: 'smooth'});
+    document.getElementById('view-all-container').classList.add('hidden');
+    
+    // 6. Limpiar URL para evitar confusiones
+    window.history.replaceState(null, null, window.location.pathname);
+    
+    // 7. Feedback visual
+    showToast(`📅 Mostrando los ${newest.length} productos más recientes`);
+}
     
 </script>
 
