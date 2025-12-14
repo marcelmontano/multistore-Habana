@@ -725,10 +725,10 @@
     
 
     <script>
-    // --- CONFIGURACIÓN DE LA HOJA DE CÁLCULO ---
-    const SHEET_ID = '2PACX-1vRfsFS5cy5p0n3N5b3_895SBwLV8goVeuCqwuAeSzEhvp-NXbgiVRG5m9D2t4_E-Ruj9gKf6-8gblBw';
-    const TARGET_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
-    const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(TARGET_URL);
+    // --- CONFIGURACIÓN LOCAL (GITHUB) ---
+// Usamos una versión (?v=...) para obligar al navegador a ver los cambios nuevos cuando actualices
+const DATA_VERSION = "1.0"; 
+const PROXY_URL = `./inventario.csv?v=${DATA_VERSION}`;
 
     // --- VARIABLES GLOBALES ---
     let groupedProducts = []; 
